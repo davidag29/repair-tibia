@@ -32,23 +32,23 @@ with tempfile.TemporaryDirectory() as temp:
     with patch('builtins.input', side_effect=['Z:/no-existe-tibia-123', str(valid)]), \
          patch('sys.stdout', new_callable=io.StringIO):
         assert m.locate_installation(missing) == valid
-    with patch.object(m.sys, 'argv', ['RepararTibia.exe', '--repair', '--root', str(missing)]), \
+    with patch.object(m.sys, 'argv', ['RepararTibia.exe', '--diagnose', '--root', str(missing)]), \
          patch('builtins.input', return_value=''), patch('sys.stdout', new_callable=io.StringIO), \
-         patch.object(m, 'plans') as plans, patch.object(m, 'confirm_repair') as confirm:
+         patch.object(m, 'plans') as plans, patch.object(m, 'welcome_choice') as confirm:
         assert m.main() is False
         plans.assert_not_called()
         confirm.assert_not_called()
 
 # La bienvenida requiere consentimiento antes de consultar o reparar.
-for reply, expected_result in [('Y', True), ('y', True), ('s', True), ('N', False), ('', False)]:
+for reply, expected_result in [('Y', 'repair'), ('y', 'repair'), ('s', 'repair'), ('R', 'restore'), ('N', None), ('', None)]:
     with patch('builtins.input', return_value=reply), patch('sys.stdout', new_callable=io.StringIO) as output:
-        assert m.confirm_repair(Path('Tibia')) is expected_result
+        assert m.welcome_choice(Path('Tibia')) == expected_result
         assert '¿QUIERES REPARAR TIBIA?' in output.getvalue()
         assert 'S-Repair for Tibia' in output.getvalue()
         assert 'Autor: S. Tensen' in output.getvalue()
         assert 'sin aprobación' in output.getvalue()
 with patch('builtins.input', side_effect=['invalido', 'N']), patch('sys.stdout', new_callable=io.StringIO):
-    assert m.confirm_repair(Path('Tibia')) is False
+    assert m.welcome_choice(Path('Tibia')) is None
 with tempfile.TemporaryDirectory() as temp:
     valid = Path(temp)
     (valid / 'Tibia.exe').write_bytes(b'test')
@@ -133,15 +133,25 @@ with tempfile.TemporaryDirectory() as temp:
 for language, confirm_word in [('es', '¿QUIERES REPARAR TIBIA?'), ('en', 'DO YOU WANT TO REPAIR TIBIA?')]:
     m.LANGUAGE = language
     with patch('builtins.input', return_value='N'), patch('sys.stdout', new_callable=io.StringIO) as output:
-        assert m.confirm_repair(Path('Tibia')) is False
+        assert m.welcome_choice(Path('Tibia')) is None
         assert confirm_word in output.getvalue()
-    for option, expected_action in [('1', 'repair'), ('2', 'restore'), ('', None), ('0', None)]:
+    for option, expected_action in [('S', 'repair'), ('R', 'restore'), ('', None), ('0', None)]:
         with patch('builtins.input', return_value=option), patch('sys.stdout', new_callable=io.StringIO):
-            assert m.choose_action() == expected_action
-for option, language in [('1', 'es'), ('2', 'en'), ('', 'es')]:
+            assert m.welcome_choice(Path('Tibia')) == expected_action
+for option, language in [('1', 'es'), ('2', 'en'), ('', 'en')]:
     with patch('builtins.input', return_value=option), patch('sys.stdout', new_callable=io.StringIO):
         assert m.choose_language() is True and m.LANGUAGE == language
 m.LANGUAGE = 'es'
+with patch('builtins.input', side_effect=['L', '2', 'N']), patch('sys.stdout', new_callable=io.StringIO) as output:
+    assert m.welcome_choice(Path('Tibia')) is None
+    assert m.LANGUAGE == 'en'
+    assert output.getvalue().index('QUÉ HARÁ EL ASISTENTE') < output.getvalue().index('[1] Español')
+    assert 'WHAT THE ASSISTANT WILL DO' in output.getvalue()
+    assert '[L] Language: English / Español' in output.getvalue()
+    assert '[R] Backups / Restore' in output.getvalue()
+m.LANGUAGE = 'es'
+with patch('builtins.input', side_effect=['L', '0', 'N']), patch('sys.stdout', new_callable=io.StringIO):
+    assert m.welcome_choice(Path('Tibia')) is None and m.LANGUAGE == 'es'
 
 # Respaldo 1.0 sin metadatos nuevos: listado, selección, confirmación y restauración.
 with tempfile.TemporaryDirectory() as temp:
@@ -192,7 +202,7 @@ with tempfile.TemporaryDirectory() as temp:
     assert backup.exists() and (root / 'other.dll').read_bytes() == b'original dll'
     # Menú de restauración completo: no consultar el servidor ni reparar.
     with patch.object(m.sys, 'argv', ['S-Repair for Tibia.exe', '--language', 'en', '--root', str(root), '--menu']), \
-         patch('builtins.input', side_effect=['2', '1', 'Y']), patch.object(m, 'plans') as plans, \
+         patch('builtins.input', side_effect=['R', '1', 'Y']), patch.object(m, 'plans') as plans, \
          patch('sys.stdout', new_callable=io.StringIO) as output:
         m.main()
         plans.assert_not_called()

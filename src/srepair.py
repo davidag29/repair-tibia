@@ -1,6 +1,6 @@
 """S-Repair for Tibia - S. Tensen. Español / English.
-Abre el ejecutable para elegir idioma y reparar o restaurar.
-Open the executable to choose a language and repair or restore.
+Abre el ejecutable para ver la descripción: L cambia idioma y R abre respaldos.
+Open the executable for the description: L changes language and R opens backups.
 Código fuente / Source: python src/srepair.py --menu
 """
 import argparse
@@ -23,7 +23,7 @@ ORIGIN = 'https://static.tibia.com/launcher/'
 PROTECTED = {'conf', 'minimap', 'characterdata', 'screenshots', 'log', 'cache'}
 APP_NAME = 'S-Repair for Tibia'
 AUTHOR = 'S. Tensen'
-VERSION = '1.1.0'
+VERSION = '1.1.1'
 LANGUAGE = 'es'
 
 
@@ -41,10 +41,12 @@ def ask(prompt):
 def choose_language():
     global LANGUAGE
     print('\n' + APP_NAME + ' ' + VERSION + ' | ' + AUTHOR, flush=True)
-    print('\n[1] Español\n[2] English\n[0] Salir / Exit', flush=True)
+    print('\n[1] Español\n[2] English\n[0] Volver / Back', flush=True)
     while True:
-        answer = ask('\nIdioma / Language [1]: ').lower()
-        if answer in ('', '1', 'es', 'español'):
+        answer = ask('\nIdioma / Language [' + ('1' if LANGUAGE == 'es' else '2') + ']: ').lower()
+        if not answer:
+            return True
+        if answer in ('1', 'es', 'español'):
             LANGUAGE = 'es'
             return True
         if answer in ('2', 'en', 'english'):
@@ -53,21 +55,6 @@ def choose_language():
         if answer == '0':
             return False
         print('Elige 1, 2 o 0 / Choose 1, 2 or 0.', flush=True)
-
-
-def choose_action():
-    print('\n' + APP_NAME + ' ' + VERSION, flush=True)
-    print(t('[1] Reparar Tibia\n[2] Restaurar un respaldo\n[0] Salir',
-            '[1] Repair Tibia\n[2] Restore a backup\n[0] Exit'), flush=True)
-    while True:
-        answer = ask(t('\nElige una opción [0]: ', '\nChoose an option [0]: '))
-        if answer == '1':
-            return 'repair'
-        if answer == '2':
-            return 'restore'
-        if answer in ('', '0'):
-            return None
-        print(t('Elige 1, 2 o 0.', 'Choose 1, 2 or 0.'), flush=True)
 
 
 def console_colors():
@@ -93,7 +80,7 @@ def console_colors():
         return False
 
 
-def confirm_repair(root):
+def show_welcome(root):
     colors = console_colors()
     def style(text, color):
         return f'\033[{color}m{text}\033[0m' if colors else text
@@ -124,21 +111,34 @@ def confirm_repair(root):
     row(t('Herramienta independiente, sin aprobación de CipSoft o BattlEye. No podemos garantizar ausencia de bloqueos o incompatibilidades.', 'Independent tool, not approved by CipSoft or BattlEye. We cannot guarantee freedom from blocks or compatibility issues.'))
     row()
     row(t('Instalación: ', 'Installation: ') + str(root))
-    row(t('Los respaldos se guardan junto a esta carpeta. El menú permite restaurarlos.', 'Backups are saved beside this folder. Use the menu to restore them.'))
+    row(t('Los respaldos se guardan junto a esta carpeta. Usa [R] para restaurarlos.', 'Backups are saved beside this folder. Use [R] to restore them.'))
     row()
     row(t('¿QUIERES REPARAR TIBIA?', 'DO YOU WANT TO REPAIR TIBIA?'), '1;36', center=True)
+    row('[L] Language: English / Español', '1;36', center=True)
+    row(t('[R] Respaldos / Restaurar', '[R] Backups / Restore'), '1;36', center=True)
     row(t('[S] Confirmar e iniciar     [N] Salir', '[Y] Confirm and start     [N] Exit'), '1;37', center=True)
     row(t('Enter sin elegir cancela la operación.', 'Pressing Enter without a choice cancels.'), center=True)
     print(style(border, '36'), flush=True)
+
+
+def welcome_choice(root):
     while True:
-        choice = ask(t('\nTu elección [S/N]: ', '\nYour choice [Y/N]: ')).lower()
-        if choice in ('y', 's', 'sí', 'si', 'yes'):
-            print(style(t('\nConfirmado. Iniciando comprobación y reparación...\n', '\nConfirmed. Starting checks and repair...\n'), '1;32'), flush=True)
-            return True
-        if choice in ('', 'n'):
-            print(t('\nOperación cancelada. No se modificó ningún archivo.', '\nCancelled. No files were changed.'), flush=True)
-            return False
-        print(t('Escribe S para iniciar o N para salir.', 'Enter Y to start or N to exit.'), flush=True)
+        show_welcome(root)
+        while True:
+            choice = ask(t('\nTu elección [S/N/L/R]: ', '\nYour choice [Y/N/L/R]: ')).lower()
+            if choice == 'l':
+                choose_language()
+                break
+            if choice == 'r':
+                return 'restore'
+            if choice in ('y', 's', 'sí', 'si', 'yes'):
+                print(t('\nConfirmado. Iniciando comprobación y reparación...\n', '\nConfirmed. Starting checks and repair...\n'), flush=True)
+                return 'repair'
+            if choice in ('', 'n', '0'):
+                print(t('\nOperación cancelada. No se modificó ningún archivo.', '\nCancelled. No files were changed.'), flush=True)
+                return None
+            print(t('Escribe S para reparar, L para idioma, R para respaldos o N para salir.',
+                    'Enter Y to repair, L for language, R for backups or N to exit.'), flush=True)
 
 
 def human_bytes(value):
@@ -383,8 +383,8 @@ def find_backups(root):
 
 def restore_hint(root, backup):
     print(t('\nUbicación del respaldo: ', '\nBackup location: ') + str(backup), flush=True)
-    print(t('Para restaurarlo, vuelve a abrir el programa y elige «Restaurar un respaldo».',
-            'To restore it, reopen the program and choose "Restore a backup".'), flush=True)
+    print(t('Para restaurarlo, vuelve a abrir el programa y elige [R] Respaldos.',
+            'To restore it, reopen the program and choose [R] Backups.'), flush=True)
     print(t('También puedes usar este comando en PowerShell:', 'You can also use this PowerShell command:'), flush=True)
     exe = Path(sys.executable) if getattr(sys, 'frozen', False) else Path(__file__).resolve()
     prefix = '& ' if getattr(sys, 'frozen', False) else 'python '
@@ -669,9 +669,6 @@ def main():
     early, _ = preliminary.parse_known_args()
     if early.language:
         LANGUAGE = early.language
-    elif interactive or '--menu' in sys.argv:
-        if not choose_language():
-            return False
     parser = LocalizedParser(description=APP_NAME + ' ' + VERSION + ' - ' + t('Autor: ', 'Author: ') + AUTHOR,
                              add_help=False, usage=t('%(prog)s [opciones]', '%(prog)s [options]'))
     parser._optionals.title = t('opciones', 'options')
@@ -680,7 +677,7 @@ def main():
     parser.add_argument('--root', '--ruta', type=Path, default=Path(os.environ.get('LOCALAPPDATA', '.')) / 'Tibia',
                         metavar=t('CARPETA', 'FOLDER'), help=t('Carpeta de instalación de Tibia', 'Tibia installation folder'))
     action = parser.add_mutually_exclusive_group()
-    action.add_argument('--menu', action='store_true', help=t('Abrir el menú de reparar o restaurar', 'Open the repair or restore menu'))
+    action.add_argument('--menu', action='store_true', help=t('Abrir la presentación con las opciones L y R', 'Open the welcome screen with L and R options'))
     action.add_argument('--diagnose', '--diagnostico', action='store_true', help=t('Revisar sin modificar archivos', 'Check without modifying files'))
     action.add_argument('--verify-downloads', '--verificar-descargas', action='store_true', help=t('Verificar descargas sin instalar', 'Verify downloads without installing'))
     action.add_argument('--repair', '--reparar', action='store_true', help=t('Solicitar confirmación y reparar', 'Ask for confirmation and repair'))
@@ -689,11 +686,12 @@ def main():
     args = parser.parse_args()
     operation = ('restore' if args.restore else 'repair' if args.repair else
                  'verify' if args.verify_downloads else 'diagnose')
-    if interactive or args.menu:
-        operation = choose_action()
+    root = args.root.resolve()
+    if interactive or args.menu or operation == 'repair':
+        operation = welcome_choice(root)
         if operation is None:
             return False
-    root = locate_installation(args.root.resolve())
+    root = locate_installation(root)
     if root is None:
         return False
     if operation == 'restore':
@@ -703,8 +701,6 @@ def main():
         restore(root, backup)
         return
     if operation == 'repair':
-        if not confirm_repair(root):
-            return False
         require_closed(root)
     print(t('Instalación: ', 'Installation: ') + str(root), flush=True)
     bundles = plans(root)

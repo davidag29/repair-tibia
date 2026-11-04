@@ -1,6 +1,6 @@
 # S-Repair for Tibia
 
-**S. Tensen · v1.1.0 · Windows x64 · Español / English**
+**S. Tensen · v1.1.1 · Windows x64 · Español / English**
 
 [Español](#espanol) | [English](#english) | [Descargas / Downloads](https://github.com/davidag29/repair-tibia/releases)
 
@@ -17,8 +17,8 @@ Asistente independiente para instalaciones de Tibia cuyo cliente no se actualiza
 
 Descarga el ejecutable desde [la última versión publicada](https://github.com/davidag29/repair-tibia/releases/latest). El archivo de GitHub se llama **`S-Repair.for.Tibia.exe`**. Incluye Python y sus dependencias; no necesitas instalar Python para utilizarlo.
 
-1. Abre el ejecutable y elige **1 — Español**. Enter también selecciona español; **0** sale.
-2. Elige **1 — Reparar Tibia**, **2 — Restaurar un respaldo** o **0 — Salir**. Enter en el menú sale sin cambios.
+1. Abre el ejecutable: aparece directamente toda la descripción del proceso y sus avisos, en español.
+2. En esa misma pantalla, usa **L — Language: English / Español** para cambiar el idioma, **R — Respaldos / Restaurar**, **S — Confirmar e iniciar** o **N — Salir**. Enter sale sin cambios. Al elegir L, selecciona 1 para español o 2 para inglés; vuelve automáticamente a la descripción. Enter conserva el idioma y 0 vuelve sin cambiarlo.
 3. Si no encuentra la instalación habitual, indica la carpeta que contiene `Tibia.exe`. Puedes pegar una ruta con espacios, entre comillas, o la ruta al ejecutable. **Una respuesta vacía cierra el reparador sin cambios.** Si la ruta es incorrecta, puedes reintentarlo.
 
 ### Reparar Tibia
@@ -49,9 +49,9 @@ Si Tibia está en `D:\Juegos\Tibia`, los respaldos quedan en `D:\Juegos\Tibia-re
 
 Cada respaldo contiene los archivos que iban a reemplazarse y `restore.json`. **No es una copia completa de toda la instalación.** Se conserva después de restaurar. Los respaldos de la versión 1.0.0 también son compatibles.
 
-### Restaurar desde el menú
+### Restaurar con R
 
-1. Abre el programa, elige español y luego **2 — Restaurar un respaldo**.
+1. Abre el programa y, en la pantalla de descripción, pulsa **R — Respaldos / Restaurar**. Puedes cambiar antes el idioma con L.
 2. Verás los últimos 20 respaldos de esa instalación, ordenados del más reciente al más antiguo, con sus rutas completas.
 3. Escribe el número correspondiente o pega la ruta de otro respaldo. Enter sin escribir nada sale sin cambios.
 4. Comprueba las rutas de instalación y respaldo. Confirma con **S + Enter**; **N o Enter** cancelan.
@@ -122,8 +122,8 @@ An independent assistant for Tibia installations that do not update correctly. I
 
 Download **`S-Repair.for.Tibia.exe`** from [the latest release](https://github.com/davidag29/repair-tibia/releases/latest). Python and its dependencies are included; you do not need to install Python to use it.
 
-1. Open the executable and select **2 — English**. **0** exits; pressing Enter at the language prompt selects Spanish.
-2. Choose **1 — Repair Tibia**, **2 — Restore a backup**, or **0 — Exit**. Pressing Enter at the menu exits without changes.
+1. Open the executable: the full process description and notices appear immediately, initially in Spanish.
+2. On that same screen, press **L — Language: English / Español**, then **2 — English**. The description is displayed again in English. Use **R — Backups / Restore**, **Y — Confirm and start**, or **N — Exit**. Pressing Enter at the welcome screen exits without changes. In the language selector, Enter keeps the current language and 0 returns without changing it.
 3. If the default installation cannot be found, enter the folder containing `Tibia.exe`. Quoted paths, spaces and a path to the executable itself are accepted. **An empty response closes the tool without changes.** Invalid paths can be retried.
 
 ### Repair Tibia
@@ -154,9 +154,9 @@ For `D:\Games\Tibia`, backups are created under `D:\Games\Tibia-respaldo-*`. The
 
 Each backup contains files that were about to be replaced and `restore.json`. **It is not a full copy of the installation.** The backup remains after restoration. Backups from version 1.0.0 are supported.
 
-### Restore from the menu
+### Restore with R
 
-1. Open the tool, select English, then **2 — Restore a backup**.
+1. Open the tool, optionally change the language using L, then press **R — Backups / Restore** on the description screen.
 2. The latest 20 backups for that installation are listed, newest first, with their full paths.
 3. Enter a listed number or paste another backup folder path. An empty response exits without changes.
 4. Check the installation and backup paths. Confirm with **Y + Enter**; **N or Enter** cancels.
