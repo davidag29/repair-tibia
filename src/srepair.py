@@ -1,9 +1,7 @@
-"""S-Repair for Tibia - Autor: S. Tensen.
-Reparacion desde static.tibia.com con respaldo automatico.
-
-Abre S-Repair for Tibia.exe con doble clic para reparar.
-Diagnostico: "S-Repair for Tibia.exe" --diagnose
-Restaurar:   "S-Repair for Tibia.exe" --restore RUTA_DEL_RESPALDO
+"""S-Repair for Tibia - S. Tensen. Español / English.
+Abre el ejecutable para elegir idioma y reparar o restaurar.
+Open the executable to choose a language and repair or restore.
+Código fuente / Source: python src/srepair.py --menu
 """
 import argparse
 import hashlib
@@ -25,6 +23,51 @@ ORIGIN = 'https://static.tibia.com/launcher/'
 PROTECTED = {'conf', 'minimap', 'characterdata', 'screenshots', 'log', 'cache'}
 APP_NAME = 'S-Repair for Tibia'
 AUTHOR = 'S. Tensen'
+VERSION = '1.1.0'
+LANGUAGE = 'es'
+
+
+def t(spanish, english):
+    return spanish if LANGUAGE == 'es' else english
+
+
+def ask(prompt):
+    try:
+        return input(prompt).strip()
+    except EOFError:
+        return ''
+
+
+def choose_language():
+    global LANGUAGE
+    print('\n' + APP_NAME + ' ' + VERSION + ' | ' + AUTHOR, flush=True)
+    print('\n[1] Español\n[2] English\n[0] Salir / Exit', flush=True)
+    while True:
+        answer = ask('\nIdioma / Language [1]: ').lower()
+        if answer in ('', '1', 'es', 'español'):
+            LANGUAGE = 'es'
+            return True
+        if answer in ('2', 'en', 'english'):
+            LANGUAGE = 'en'
+            return True
+        if answer == '0':
+            return False
+        print('Elige 1, 2 o 0 / Choose 1, 2 or 0.', flush=True)
+
+
+def choose_action():
+    print('\n' + APP_NAME + ' ' + VERSION, flush=True)
+    print(t('[1] Reparar Tibia\n[2] Restaurar un respaldo\n[0] Salir',
+            '[1] Repair Tibia\n[2] Restore a backup\n[0] Exit'), flush=True)
+    while True:
+        answer = ask(t('\nElige una opción [0]: ', '\nChoose an option [0]: '))
+        if answer == '1':
+            return 'repair'
+        if answer == '2':
+            return 'restore'
+        if answer in ('', '0'):
+            return None
+        print(t('Elige 1, 2 o 0.', 'Choose 1, 2 or 0.'), flush=True)
 
 
 def console_colors():
@@ -63,41 +106,39 @@ def confirm_repair(root):
             print(style(content, color) if color else content, flush=True)
     print('\n' + style(border, '36'), flush=True)
     row(APP_NAME, '1;36', center=True)
-    row('ASISTENTE DE REPARACION', '1;36', center=True)
-    row('Autor: ' + AUTHOR, center=True)
-    row('Archivos oficiales / Respaldo automatico', center=True)
+    row(t('ASISTENTE DE REPARACIÓN', 'REPAIR ASSISTANT'), '1;36', center=True)
+    row(t('Autor: ', 'Author: ') + AUTHOR + ' | ' + VERSION, center=True)
+    row(t('Archivos oficiales / Respaldo automático', 'Official files / Automatic backup'), center=True)
     print(style(border, '36'), flush=True)
     row()
-    row('QUE HARA EL ASISTENTE', '1;37')
-    row('1. Esperar a que cierres Tibia y comprobar la instalacion.')
-    row('2. Descargar los archivos necesarios del servidor oficial, evitando la cache antigua.')
-    row('3. Verificar cada descarga con SHA-256 y crear un respaldo.')
-    row('4. Reemplazar los archivos desactualizados o danados y verificar el resultado.')
+    row(t('QUÉ HARÁ EL ASISTENTE', 'WHAT THE ASSISTANT WILL DO'), '1;37')
+    row(t('1. Esperar a que cierres Tibia y comprobar la instalación.', '1. Wait for you to close Tibia and check the installation.'))
+    row(t('2. Descargar los archivos necesarios del servidor oficial, evitando la caché antigua.', '2. Download the required files from the official server, bypassing stale cache.'))
+    row(t('3. Verificar cada descarga con SHA-256 y crear un respaldo.', '3. Verify each download with SHA-256 and create a backup.'))
+    row(t('4. Reemplazar los archivos desactualizados o dañados y verificar el resultado.', '4. Replace outdated or damaged files and verify the result.'))
     row()
-    row('Se conservan tus mapas, hotkeys, configuraciones y capturas.', '32')
+    row(t('Se conservan tus mapas, atajos de teclado, configuraciones y capturas.', 'Your maps, hotkeys, settings and screenshots are preserved.'), '32')
     row()
-    row('INFORMACION SOBRE LOS ARCHIVOS Y BATTLEYE', '1;33')
-    row('Restauramos copias oficiales: no incorporamos cambios propios al codigo del juego, no modificamos su memoria ni desactivamos BattlEye.')
-    row('Esta herramienta es independiente y no cuenta con aprobacion de CipSoft o BattlEye. No podemos garantizar ausencia de bloqueos o incompatibilidades.')
+    row(t('ARCHIVOS OFICIALES Y BATTLEYE', 'OFFICIAL FILES AND BATTLEYE'), '1;33')
+    row(t('Restauramos copias oficiales: no incorporamos cambios propios al código del juego, no modificamos su memoria ni desactivamos BattlEye.', 'We restore official copies: we do not add custom game code, modify game memory or disable BattlEye.'))
+    row(t('Herramienta independiente, sin aprobación de CipSoft o BattlEye. No podemos garantizar ausencia de bloqueos o incompatibilidades.', 'Independent tool, not approved by CipSoft or BattlEye. We cannot guarantee freedom from blocks or compatibility issues.'))
     row()
-    row('Instalacion: ' + str(root))
+    row(t('Instalación: ', 'Installation: ') + str(root))
+    row(t('Los respaldos se guardan junto a esta carpeta. El menú permite restaurarlos.', 'Backups are saved beside this folder. Use the menu to restore them.'))
     row()
-    row('QUIERES REPARAR TIBIA?', '1;36', center=True)
-    row('[Y] Confirmar e iniciar     [N] Salir', '1;37', center=True)
-    row('Enter sin elegir cancela la operacion.', center=True)
+    row(t('¿QUIERES REPARAR TIBIA?', 'DO YOU WANT TO REPAIR TIBIA?'), '1;36', center=True)
+    row(t('[S] Confirmar e iniciar     [N] Salir', '[Y] Confirm and start     [N] Exit'), '1;37', center=True)
+    row(t('Enter sin elegir cancela la operación.', 'Pressing Enter without a choice cancels.'), center=True)
     print(style(border, '36'), flush=True)
     while True:
-        try:
-            choice = input('\nTu eleccion [Y/N]: ').strip().lower()
-        except EOFError:
-            choice = ''
-        if choice in ('y', 's'):
-            print(style('\nConfirmado. Iniciando comprobacion y reparacion...\n', '1;32'), flush=True)
+        choice = ask(t('\nTu elección [S/N]: ', '\nYour choice [Y/N]: ')).lower()
+        if choice in ('y', 's', 'sí', 'si', 'yes'):
+            print(style(t('\nConfirmado. Iniciando comprobación y reparación...\n', '\nConfirmed. Starting checks and repair...\n'), '1;32'), flush=True)
             return True
         if choice in ('', 'n'):
-            print('\nOperacion cancelada. No se modifico ningun archivo.', flush=True)
+            print(t('\nOperación cancelada. No se modificó ningún archivo.', '\nCancelled. No files were changed.'), flush=True)
             return False
-        print('Escribe Y para iniciar o N para salir.', flush=True)
+        print(t('Escribe S para iniciar o N para salir.', 'Enter Y to start or N to exit.'), flush=True)
 
 
 def human_bytes(value):
@@ -143,7 +184,8 @@ class Progress:
         else:
             print(text, flush=True)
 
-    def finish(self, detail='Listo'):
+    def finish(self, detail=None):
+        detail = detail or t('Listo', 'Done')
         self.update(self.total, detail, force=True)
         if self.tty:
             print(flush=True)
@@ -161,7 +203,7 @@ def digest(data):
 def fetch(relative, progress=None):
     url = urllib.parse.urljoin(ORIGIN, relative)
     if urllib.parse.urlsplit(url).netloc != 'static.tibia.com':
-        raise ValueError('Servidor no permitido: ' + url)
+        raise ValueError(t('Servidor no permitido: ', 'Server not allowed: ') + url)
     url += ('&' if '?' in url else '?') + 'repair=' + uuid.uuid4().hex
     last = None
     for attempt in range(3):
@@ -170,7 +212,7 @@ def fetch(relative, progress=None):
             with urllib.request.urlopen(request, timeout=60) as response:
                 final = urllib.parse.urlsplit(response.url)
                 if final.scheme != 'https' or final.netloc != 'static.tibia.com':
-                    raise ValueError('Redireccion no permitida')
+                    raise ValueError(t('Redirección no permitida', 'Redirect not allowed'))
                 chunks, received = [], 0
                 total = int(response.headers.get('Content-Length', 0))
                 while chunk := response.read(256 * 1024):
@@ -183,19 +225,19 @@ def fetch(relative, progress=None):
             last = exc
             if attempt < 2:
                 time.sleep(1)
-    raise RuntimeError('No se pudo descargar ' + relative) from last
+    raise RuntimeError(t('No se pudo descargar ', 'Could not download ') + relative) from last
 
 
 def safe_path(root, relative):
     clean = relative.replace('\\', '/')
     parts = clean.split('/')
     if not clean or any(p in ('', '.', '..') or ':' in p for p in parts):
-        raise ValueError('Ruta no permitida: ' + relative)
+        raise ValueError(t('Ruta no permitida: ', 'Path not allowed: ') + relative)
     if parts[0].lower() in PROTECTED:
-        raise ValueError('El manifiesto intenta modificar datos personales: ' + relative)
+        raise ValueError(t('El manifiesto intenta modificar datos personales: ', 'Manifest attempts to modify personal data: ') + relative)
     target = root.joinpath(*parts).resolve()
     if not target.is_relative_to(root.resolve()):
-        raise ValueError('Ruta fuera de la instalacion: ' + relative)
+        raise ValueError(t('Ruta fuera de la instalación: ', 'Path outside the installation: ') + relative)
     return target
 
 
@@ -217,26 +259,26 @@ def require_closed(root):
     active = running(root)
     if not active:
         return False
-    print('\nTIBIA ESTA ABIERTO', flush=True)
-    print('Cierra el juego y su launcher normalmente. No cierres esta ventana.', flush=True)
-    print('Al cerrarlos, la comprobacion se reiniciara automaticamente aqui.', flush=True)
-    print('Puedes cancelar con Ctrl+C. No se forzara el cierre del juego.\n', flush=True)
+    print(t('\nTIBIA ESTÁ ABIERTO', '\nTIBIA IS RUNNING'), flush=True)
+    print(t('Cierra el juego y su iniciador normalmente. No cierres esta ventana.', 'Close the game and its launcher normally. Keep this window open.'), flush=True)
+    print(t('Al cerrarlos, la comprobación se reiniciará automáticamente aquí.', 'Once they close, checks will restart automatically in this window.'), flush=True)
+    print(t('Puedes cancelar con Ctrl+C. No se forzará el cierre del juego.\n', 'Press Ctrl+C to cancel. The game will not be forcibly closed.\n'), flush=True)
     start = time.monotonic()
     previous_names = None
     while active:
         names = ', '.join(sorted({r['Name'] for r in active}))
         if sys.stdout.isatty():
-            text = f'Esperando cierre... {int(time.monotonic() - start)}s | {names}'
+            text = t('Esperando cierre...', 'Waiting for the game to close...') + f' {int(time.monotonic() - start)}s | {names}'
             width = max(shutil.get_terminal_size((110, 25)).columns - 1, 40)
             print('\r' + text[:width].ljust(width), end='', flush=True)
         elif names != previous_names:
-            print('Esperando cierre: ' + names, flush=True)
+            print(t('Esperando cierre: ', 'Waiting for: ') + names, flush=True)
         previous_names = names
         time.sleep(2)
         active = running(root)
     if sys.stdout.isatty():
         print(flush=True)
-    print('\n[OK] Tibia esta cerrado. Reiniciando comprobacion...\n', flush=True)
+    print(t('\n[OK] Tibia está cerrado. Reiniciando comprobación...\n', '\n[OK] Tibia is closed. Restarting checks...\n'), flush=True)
     return True
 
 
@@ -246,7 +288,7 @@ def expected(entry):
 
 def decode_verified(packed, entry):
     if digest(packed) != entry['packedhash'] or len(packed) != entry['packedsize']:
-        raise ValueError('Descarga no coincide con SHA-256/tamano: ' + entry['localfile'])
+        raise ValueError(t('La descarga no coincide con SHA-256/tamaño: ', 'Downloaded SHA-256/size mismatch: ') + entry['localfile'])
     def valid(data):
         return (digest(data) == expected(entry) and
                 len(data) == entry.get('unpackedsize', entry['packedsize']))
@@ -265,7 +307,7 @@ def decode_verified(packed, entry):
             continue
         if valid(data):
             return data
-    raise ValueError('Archivo descomprimido invalido: ' + entry['localfile'])
+    raise ValueError(t('Archivo descomprimido inválido: ', 'Invalid decompressed file: ') + entry['localfile'])
 
 
 def matches(path, entry):
@@ -279,55 +321,188 @@ def matches(path, entry):
 
 
 def plans(root):
-    print('\n[1/4] COMPROBAR ARCHIVOS\nConsultando la version oficial sin cache...', flush=True)
+    print(t('\n[1/4] COMPROBAR ARCHIVOS\nConsultando la versión oficial sin caché...', '\n[1/4] CHECK FILES\nChecking the official version without stale cache...'), flush=True)
     client = root / 'packages' / 'Tibia'
     result = []
     for label, base, folder in [('launcher', 'launcher-windows-current/', root),
                                  ('cliente', 'tibiaclient-windows-current/', client),
                                  ('assets', 'assets-current/', client)]:
+        display_label = {'launcher': t('iniciador', 'launcher'), 'cliente': t('cliente', 'client'),
+                         'assets': t('recursos', 'assets')}[label]
         name = 'assets.json' if label == 'assets' else 'package.json'
         raw = fetch(base + name)
         manifest = json.loads(raw)
         if not isinstance(manifest.get('files'), list) or not manifest['files']:
-            raise ValueError('Manifiesto vacio o invalido: ' + label)
+            raise ValueError(t('Manifiesto vacío o inválido: ', 'Empty or invalid manifest: ') + display_label)
         marker_name = 'assets.json.sha256' if label == 'assets' else 'package.json.version'
         marker = fetch(base + marker_name).decode('ascii').strip()
         if label == 'assets':
             if marker != digest(raw):
-                raise ValueError('El hash del manifiesto de assets no coincide; vuelve a intentar.')
+                raise ValueError(t('El hash del manifiesto de recursos no coincide; vuelve a intentar.', 'Assets manifest hash mismatch; please try again.'))
         elif marker != manifest['version']:
-            raise ValueError('La version cambio durante la consulta; vuelve a intentar.')
+            raise ValueError(t('La versión cambió durante la consulta; vuelve a intentar.', 'The version changed while checking; please try again.'))
         entries = [e for e in manifest['files']
                    if e['localfile'].replace('\\', '/').split('/')[0].lower() not in PROTECTED]
         changes = []
-        progress = Progress('Revisando ' + label, len(entries))
+        progress = Progress(t('Revisando ', 'Checking ') + display_label, len(entries))
         for index, entry in enumerate(entries, 1):
             progress.update(index - 1, entry['localfile'])
             if not matches(safe_path(folder, entry['localfile']), entry):
                 changes.append(entry)
         progress.finish()
-        print(f'{label}: version {manifest.get("version", marker[:12])}; {len(changes)} de {len(manifest["files"])} archivos requieren reemplazo.', flush=True)
+        print(t('{label}: versión {version}; {count} de {total} archivos requieren reemplazo.',
+                '{label}: version {version}; {count} of {total} files need replacement.').format(
+                    label=display_label, version=manifest.get('version', marker[:12]), count=len(changes), total=len(manifest['files'])), flush=True)
         result.append(dict(label=label, base=base, folder=folder, raw=raw, name=name,
                            marker=marker, marker_name=marker_name, changes=changes))
     return result
 
 
+def read_backup(root, backup):
+    try:
+        journal = json.loads((backup / 'restore.json').read_text(encoding='utf-8'))
+        if Path(journal['root']).resolve() != root.resolve():
+            raise ValueError(t('El respaldo pertenece a otra instalación.', 'The backup belongs to another installation.'))
+        if not isinstance(journal['files'], list) or not journal['files']:
+            raise ValueError(t('El respaldo no contiene un registro de archivos válido.', 'The backup does not contain a valid file record.'))
+        return journal
+    except (OSError, KeyError, TypeError, json.JSONDecodeError) as exc:
+        raise ValueError(t('No se puede leer el respaldo: ', 'Cannot read backup: ') + str(backup)) from exc
+
+
+def find_backups(root):
+    backups = []
+    for candidate in root.parent.glob('Tibia-respaldo-*'):
+        try:
+            read_backup(root, candidate)
+        except (ValueError, OSError):
+            continue
+        backups.append(candidate)
+    return sorted(backups, key=lambda p: p.name, reverse=True)
+
+
+def restore_hint(root, backup):
+    print(t('\nUbicación del respaldo: ', '\nBackup location: ') + str(backup), flush=True)
+    print(t('Para restaurarlo, vuelve a abrir el programa y elige «Restaurar un respaldo».',
+            'To restore it, reopen the program and choose "Restore a backup".'), flush=True)
+    print(t('También puedes usar este comando en PowerShell:', 'You can also use this PowerShell command:'), flush=True)
+    exe = Path(sys.executable) if getattr(sys, 'frozen', False) else Path(__file__).resolve()
+    prefix = '& ' if getattr(sys, 'frozen', False) else 'python '
+    quote = lambda value: "'" + str(value).replace("'", "''") + "'"
+    print(prefix + quote(exe) + ' --root ' + quote(root) + ' --restore ' + quote(backup), flush=True)
+
+
+def select_backup(root):
+    backups = find_backups(root)[:20]
+    print(t('\nRESTAURAR UN RESPALDO', '\nRESTORE A BACKUP'), flush=True)
+    print(t('Los respaldos se guardan junto a la instalación, en:\n  ', 'Backups are stored beside the installation, in:\n  ') + str(root.parent), flush=True)
+    print('  Tibia-respaldo-AAAAMMDD-HHMMSS-*', flush=True)
+    if backups:
+        print(t('\nRespaldos de esta instalación (más recientes primero):', '\nBackups for this installation (newest first):'), flush=True)
+        for index, backup in enumerate(backups, 1):
+            print(f'[{index}] {backup}', flush=True)
+    else:
+        print(t('\nNo encontramos respaldos para esta instalación.', '\nNo backups were found for this installation.'), flush=True)
+    print(t('\nEscribe un número de la lista o pega la ruta de una carpeta de respaldo.',
+            '\nEnter a number from the list or paste a backup folder path.'), flush=True)
+    print(t('Enter sin escribir nada sale sin cambios.', 'Press Enter without typing to exit without changes.'), flush=True)
+    while True:
+        answer = ask(t('\nRespaldo: ', '\nBackup: '))
+        if not answer:
+            return None
+        try:
+            if answer.isdecimal():
+                index = int(answer) - 1
+                if not 0 <= index < len(backups):
+                    raise ValueError()
+                candidate = backups[index]
+            else:
+                candidate = Path(os.path.expandvars(answer.strip('\"\''))).expanduser().resolve()
+                if candidate.name == 'restore.json':
+                    candidate = candidate.parent
+            read_backup(root, candidate)
+            return candidate
+        except (OSError, ValueError, RuntimeError):
+            print(t('Respaldo no válido para esta instalación. Intenta otra ruta o pulsa Enter para salir.',
+                    'Invalid backup for this installation. Try another path or press Enter to exit.'), flush=True)
+
+
+def confirm_restore(root, backup):
+    print(t('\nSe restaurarán los archivos del respaldo y se quitarán los archivos que no existían antes de esa reparación.',
+            '\nFiles will be restored from this backup. Files created by that repair will be removed.'), flush=True)
+    print(t('Esto puede devolver el cliente a una versión anterior. Se conservará la carpeta del respaldo.',
+            'This may revert the client to an older version. The backup folder will be kept.'), flush=True)
+    print(t('Instalación: ', 'Installation: ') + str(root), flush=True)
+    print(t('Respaldo: ', 'Backup: ') + str(backup), flush=True)
+    while True:
+        answer = ask(t('\n¿Restaurar este respaldo? [S/N]: ', '\nRestore this backup? [Y/N]: ')).lower()
+        if answer in ('s', 'y', 'si', 'sí', 'yes'):
+            return True
+        if answer in ('', 'n', 'no'):
+            print(t('Restauración cancelada. No se modificó ningún archivo.', 'Restore cancelled. No files were changed.'), flush=True)
+            return False
+        print(t('Escribe S para restaurar o N para cancelar.', 'Enter Y to restore or N to cancel.'), flush=True)
+
+
+def validate_backup(root, backup):
+    journal = read_backup(root, backup)
+    checked, seen = [], set()
+    progress = Progress(t('Verificando respaldo', 'Verifying backup'), len(journal['files']))
+    try:
+        for index, item in enumerate(journal['files'], 1):
+            relative = item['path']
+            if not isinstance(relative, str) or type(item['existed']) is not bool:
+                raise ValueError(t('Registro de respaldo inválido.', 'Invalid backup record.'))
+            normalized = relative.replace('\\', '/').lower()
+            if normalized in seen or (normalized.startswith('packages/tibia/') and
+                                       normalized.split('/')[2] in PROTECTED):
+                raise ValueError(t('El respaldo contiene rutas duplicadas o protegidas.', 'Backup contains duplicate or protected paths.'))
+            seen.add(normalized)
+            target = safe_path(root, relative)
+            source = None
+            if item['existed']:
+                source = safe_path(backup / 'files', relative)
+                if digest(source.read_bytes()) != item['backup_hash']:
+                    raise ValueError(t('Respaldo dañado: ', 'Damaged backup: ') + relative)
+            checked.append((item, target, source))
+            progress.update(index, relative)
+    except BaseException:
+        progress.clear()
+        raise
+    progress.finish()
+    return checked
+
+
 def restore(root, backup):
-    journal = json.loads((backup / 'restore.json').read_text(encoding='utf-8'))
-    if Path(journal['root']).resolve() != root.resolve():
-        raise ValueError('El respaldo pertenece a otra instalacion.')
     require_closed(root)
-    for item in reversed(journal['files']):
-        target = safe_path(root, item['path'])
-        if item['existed']:
-            source = safe_path(backup / 'files', item['path'])
-            if digest(source.read_bytes()) != item['backup_hash']:
-                raise ValueError('Respaldo danado: ' + item['path'])
-            target.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(source, target)
-        elif target.exists():
-            target.unlink()
-    print('Restauracion terminada.')
+    # Verificar TODOS los archivos antes de la primera escritura.
+    checked = validate_backup(root, backup)
+    require_closed(root)
+    progress = Progress(t('Restaurando', 'Restoring'), len(checked))
+    failures = []
+    try:
+        for index, (item, target, source) in enumerate(reversed(checked), 1):
+            try:
+                if source is not None:
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(source, target)
+                    if digest(target.read_bytes()) != item['backup_hash']:
+                        raise OSError(t('No se pudo verificar el archivo restaurado.', 'Restored file verification failed.'))
+                elif target.exists():
+                    target.unlink()
+            except OSError:
+                failures.append(item['path'])
+            progress.update(index, item['path'])
+    except BaseException:
+        progress.clear()
+        restore_hint(root, backup)
+        raise
+    progress.finish()
+    if failures:
+        restore_hint(root, backup)
+        raise RuntimeError(t('Restauración incompleta. Cierra Tibia, comprueba los permisos y vuelve a intentarlo. Archivos pendientes: ',
+                             'Restore incomplete. Close Tibia, check permissions and try again. Remaining files: ') + ', '.join(failures))
+    print(t('\n[OK] RESTAURACIÓN COMPLETADA. El respaldo se conserva.', '\n[OK] RESTORE COMPLETED. The backup has been kept.'), flush=True)
 
 
 def repair(root, bundles, verify_only=False):
@@ -336,8 +511,9 @@ def repair(root, bundles, verify_only=False):
             bundles = plans(root)
     total_files = sum(len(b['changes']) for b in bundles)
     total_bytes = sum(e['packedsize'] for b in bundles for e in b['changes'])
-    print(f'\n[2/4] DESCARGAR Y VERIFICAR\n{total_files} archivos | {human_bytes(total_bytes)} de descarga', flush=True)
-    download_progress = Progress('Descarga', total_bytes, byte_units=True)
+    print(t('\n[2/4] DESCARGAR Y VERIFICAR\n{count} archivos | {size} de descarga',
+            '\n[2/4] DOWNLOAD AND VERIFY\n{count} files | {size} to download').format(count=total_files, size=human_bytes(total_bytes)), flush=True)
+    download_progress = Progress(t('Descarga', 'Download'), total_bytes, byte_units=True)
     completed_bytes, completed_files = 0, 0
     with tempfile.TemporaryDirectory(prefix='tibia-repair-') as temp:
         stage = Path(temp)
@@ -366,24 +542,25 @@ def repair(root, bundles, verify_only=False):
                 staged = stage / str(len(replacements))
                 staged.write_bytes(data)
                 replacements[target] = staged
-        download_progress.finish(f'{completed_files} archivos verificados con SHA-256')
+        download_progress.finish(t('{count} archivos verificados con SHA-256', '{count} files verified with SHA-256').format(count=completed_files))
         # No escribir si CipSoft publico otra version mientras se descargaba.
         for bundle in bundles:
             if digest(fetch(bundle['base'] + bundle['name'])) != digest(bundle['raw']):
-                raise RuntimeError('Cambio la actualizacion en el servidor. Vuelve a ejecutar el script.')
+                raise RuntimeError(t('La actualización cambió en el servidor. Vuelve a ejecutar el programa.', 'The update changed on the server. Run the program again.'))
         if verify_only:
-            print('Todas las descargas se descomprimieron y verificaron. No se modifico la instalacion.')
+            print(t('Todas las descargas se descomprimieron y verificaron. No se modificó la instalación.', 'All downloads were decompressed and verified. The installation was not changed.'))
             return
         if require_closed(root):
             return repair(root, plans(root))
-        print('\n[3/4] CREAR RESPALDO', flush=True)
+        print(t('\n[3/4] CREAR RESPALDO', '\n[3/4] CREATE BACKUP'), flush=True)
         backup = root.parent / ('Tibia-respaldo-' + time.strftime('%Y%m%d-%H%M%S') + '-' + uuid.uuid4().hex[:6])
         backup.mkdir()
-        journal = {'root': str(root), 'files': []}
+        journal = {'root': str(root), 'files': [], 'app_version': VERSION,
+                   'created_at': time.strftime('%Y-%m-%d %H:%M:%S')}
         partials = [folder / 'partial.package.json.version' for folder in
                     [root, root / 'packages' / 'Tibia'] if (folder / 'partial.package.json.version').exists()]
         backup_targets = list(replacements) + partials
-        backup_progress = Progress('Respaldando', len(backup_targets))
+        backup_progress = Progress(t('Creando respaldo', 'Backing up'), len(backup_targets))
         for backup_index, target in enumerate(backup_targets, 1):
             relative = target.relative_to(root).as_posix()
             item = {'path': relative, 'existed': target.exists()}
@@ -396,12 +573,12 @@ def repair(root, bundles, verify_only=False):
             backup_progress.update(backup_index, relative)
         backup_progress.finish()
         (backup / 'restore.json').write_text(json.dumps(journal, indent=2), encoding='utf-8')
-        print('Respaldo: ' + str(backup), flush=True)
+        print(t('Respaldo: ', 'Backup: ') + str(backup), flush=True)
         # Volver a comprobar antes de la primera escritura en la instalacion.
         if require_closed(root):
             return repair(root, plans(root))
-        print('\n[4/4] INSTALAR Y VERIFICAR', flush=True)
-        install_progress = Progress('Instalando', len(replacements))
+        print(t('\n[4/4] INSTALAR Y VERIFICAR', '\n[4/4] INSTALL AND VERIFY'), flush=True)
+        install_progress = Progress(t('Instalando', 'Installing'), len(replacements))
         touched = []
         try:
             for install_index, (target, staged) in enumerate(replacements.items(), 1):
@@ -410,100 +587,168 @@ def repair(root, bundles, verify_only=False):
                 with staged.open('rb') as source, target.open('wb') as destination:
                     shutil.copyfileobj(source, destination)
                 if digest(target.read_bytes()) != digest(staged.read_bytes()):
-                    raise RuntimeError('Fallo la verificacion despues de escribir: ' + str(target))
+                    raise RuntimeError(t('Falló la verificación después de escribir: ', 'Verification failed after writing: ') + str(target))
                 install_progress.update(install_index, target.name)
             for partial in partials:
                 touched.append(partial)
                 partial.unlink()
         except (Exception, KeyboardInterrupt):
             install_progress.clear()
-            print('Fallo al instalar. Restaurando los archivos modificados...', flush=True)
+            print(t('Falló la instalación. Intentando restaurar los archivos modificados...', 'Installation failed. Attempting to restore modified files...'), flush=True)
             lookup = {root / i['path']: i for i in journal['files']}
+            rollback_failures = []
             for target in reversed(touched):
                 item = lookup[target]
                 try:
                     if item['existed']:
                         shutil.copy2(backup / 'files' / item['path'], target)
+                        if digest(target.read_bytes()) != item['backup_hash']:
+                            raise OSError()
                     elif target.exists():
                         target.unlink()
-                except OSError as exc:
-                    print(f'No se pudo restaurar {target}: {exc}. Usa --restore con el respaldo.', flush=True)
+                except OSError:
+                    rollback_failures.append(str(target))
+            if rollback_failures:
+                print(t('RESTAURACIÓN AUTOMÁTICA INCOMPLETA. Archivos pendientes:', 'AUTOMATIC RESTORE INCOMPLETE. Remaining files:'), flush=True)
+                for target in rollback_failures:
+                    print('  ' + target, flush=True)
+            else:
+                print(t('Los archivos modificados se restauraron desde el respaldo.', 'Modified files were restored from the backup.'), flush=True)
+            restore_hint(root, backup)
             raise
         install_progress.finish()
-        print('\n[OK] REPARACION COMPLETADA\nCierra este reparador y abre Tibia desde su acceso directo normal.', flush=True)
+        print(t('\n[OK] REPARACIÓN COMPLETADA\nCierra este reparador y abre Tibia desde su acceso directo habitual.', '\n[OK] REPAIR COMPLETED\nClose this tool and launch Tibia from its usual shortcut.'), flush=True)
+        restore_hint(root, backup)
 
 
 def locate_installation(root):
-    if (root / 'Tibia.exe').is_file():
+    def recognizable(folder):
+        return ((folder / 'Tibia.exe').is_file() or
+                (folder / 'packages' / 'Tibia' / 'package.json').is_file() or bool(find_backups(folder)))
+    if recognizable(root):
         return root
-    print('\nNO ENCONTRAMOS LA CARPETA DE TIBIA', flush=True)
-    print('No encontramos Tibia en la ubicacion habitual o indicada:\n  ' + str(root), flush=True)
-    print('Si esta en otra ubicacion, indica la carpeta que contiene Tibia.exe.', flush=True)
-    print('Puedes pegar la ruta entre comillas. Enter sin escribir nada cierra el reparador.\n', flush=True)
+    print(t('\nNO ENCONTRAMOS LA CARPETA DE TIBIA', '\nTIBIA FOLDER NOT FOUND'), flush=True)
+    print(t('No encontramos Tibia en la ubicación habitual o indicada:\n  ', 'Tibia was not found in the usual or specified location:\n  ') + str(root), flush=True)
+    print(t('Si está en otra ubicación, indica la carpeta que contiene Tibia.exe.', 'If it is installed elsewhere, enter the folder containing Tibia.exe.'), flush=True)
+    print(t('Puedes pegar la ruta entre comillas. Enter sin escribir nada cierra el reparador.\n', 'You can paste a quoted path. Press Enter without typing to close this tool.\n'), flush=True)
     while True:
-        try:
-            answer = input('Carpeta de Tibia: ').strip()
-        except EOFError:
-            answer = ''
+        answer = ask(t('Carpeta de Tibia: ', 'Tibia folder: '))
         if not answer:
-            print('\nNo se indico una carpeta. Cerrando sin realizar cambios.', flush=True)
+            print(t('\nNo se indicó una carpeta. Cerrando sin realizar cambios.', '\nNo folder was provided. Closing without changes.'), flush=True)
             return None
         try:
             candidate = Path(os.path.expandvars(answer.strip('\"\''))).expanduser().resolve()
             if candidate.name.lower() == 'tibia.exe' and candidate.is_file():
                 candidate = candidate.parent
-            if (candidate / 'Tibia.exe').is_file():
-                print('\n[OK] Instalacion encontrada: ' + str(candidate), flush=True)
+            if recognizable(candidate):
+                print(t('\n[OK] Instalación encontrada: ', '\n[OK] Installation found: ') + str(candidate), flush=True)
                 return candidate
         except (OSError, ValueError, RuntimeError):
             pass
-        print('No encontramos Tibia.exe en esa ruta. Intenta otra carpeta o pulsa Enter para salir.', flush=True)
+        print(t('No encontramos Tibia en esa ruta. Intenta otra carpeta o pulsa Enter para salir.', 'Tibia was not found at that path. Try another folder or press Enter to exit.'), flush=True)
+
+
+class LocalizedParser(argparse.ArgumentParser):
+    def format_usage(self):
+        return super().format_usage().replace('usage:', t('uso:', 'usage:'), 1)
+
+    def format_help(self):
+        return super().format_help().replace('usage:', t('uso:', 'usage:'), 1)
+
+    def error(self, message):
+        self.print_usage(sys.stderr)
+        self.exit(2, t('\nOpciones incorrectas o incompletas. Usa --ayuda para ver los comandos.\n',
+                       '\nInvalid or incomplete options. Use --help to list commands.\n'))
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('--root', type=Path, default=Path(os.environ.get('LOCALAPPDATA', '.')) / 'Tibia')
+    global LANGUAGE
+    interactive = bool(getattr(sys, 'frozen', False)) and len(sys.argv) == 1
+    preliminary = LocalizedParser(add_help=False)
+    preliminary.add_argument('--language', '--idioma', choices=('es', 'en'), default=None)
+    early, _ = preliminary.parse_known_args()
+    if early.language:
+        LANGUAGE = early.language
+    elif interactive or '--menu' in sys.argv:
+        if not choose_language():
+            return False
+    parser = LocalizedParser(description=APP_NAME + ' ' + VERSION + ' - ' + t('Autor: ', 'Author: ') + AUTHOR,
+                             add_help=False, usage=t('%(prog)s [opciones]', '%(prog)s [options]'))
+    parser._optionals.title = t('opciones', 'options')
+    parser.add_argument('-h', '--help', '--ayuda', action='help', help=t('Mostrar esta ayuda y salir', 'Show this help and exit'))
+    parser.add_argument('--language', '--idioma', choices=('es', 'en'), help=t('Idioma de la interfaz', 'Interface language'))
+    parser.add_argument('--root', '--ruta', type=Path, default=Path(os.environ.get('LOCALAPPDATA', '.')) / 'Tibia',
+                        metavar=t('CARPETA', 'FOLDER'), help=t('Carpeta de instalación de Tibia', 'Tibia installation folder'))
     action = parser.add_mutually_exclusive_group()
-    action.add_argument('--diagnose', action='store_true', help='Revisar sin modificar archivos')
-    action.add_argument('--verify-downloads', action='store_true', help='Verificar descargas sin instalar')
-    action.add_argument('--repair', action='store_true')
-    action.add_argument('--restore', type=Path)
+    action.add_argument('--menu', action='store_true', help=t('Abrir el menú de reparar o restaurar', 'Open the repair or restore menu'))
+    action.add_argument('--diagnose', '--diagnostico', action='store_true', help=t('Revisar sin modificar archivos', 'Check without modifying files'))
+    action.add_argument('--verify-downloads', '--verificar-descargas', action='store_true', help=t('Verificar descargas sin instalar', 'Verify downloads without installing'))
+    action.add_argument('--repair', '--reparar', action='store_true', help=t('Solicitar confirmación y reparar', 'Ask for confirmation and repair'))
+    action.add_argument('--restore', '--restaurar', type=Path, nargs='?', const=True, metavar=t('RESPALDO', 'BACKUP'),
+                        help=t('Restaurar un respaldo; sin ruta, mostrar los disponibles', 'Restore a backup; omit the path to list available backups'))
     args = parser.parse_args()
+    operation = ('restore' if args.restore else 'repair' if args.repair else
+                 'verify' if args.verify_downloads else 'diagnose')
+    if interactive or args.menu:
+        operation = choose_action()
+        if operation is None:
+            return False
     root = locate_installation(args.root.resolve())
     if root is None:
         return False
-    if args.repair and not confirm_repair(root):
-        return False
-    if args.restore:
-        restore(root, args.restore.resolve())
+    if operation == 'restore':
+        backup = (args.restore.resolve() if isinstance(args.restore, Path) else select_backup(root))
+        if backup is None or not confirm_restore(root, backup):
+            return False
+        restore(root, backup)
         return
-    if args.repair:
+    if operation == 'repair':
+        if not confirm_repair(root):
+            return False
         require_closed(root)
-    print('Instalacion: ' + str(root), flush=True)
+    print(t('Instalación: ', 'Installation: ') + str(root), flush=True)
     bundles = plans(root)
-    if args.repair or args.verify_downloads:
-        repair(root, bundles, verify_only=args.verify_downloads)
+    if operation in ('repair', 'verify'):
+        repair(root, bundles, verify_only=(operation == 'verify'))
     else:
-        print('Diagnostico terminado. No se modifico la instalacion. Usa --repair para aplicar.')
+        print(t('Diagnóstico terminado. No se modificó la instalación. Usa --reparar para aplicar.',
+                'Diagnosis complete. The installation was not changed. Use --repair to apply.'))
+
+
+def error_message(exc):
+    if isinstance(exc, subprocess.CalledProcessError):
+        return t('No se pudieron comprobar los procesos de Tibia con Windows PowerShell.',
+                 'Could not check Tibia processes using Windows PowerShell.')
+    if isinstance(exc, FileNotFoundError):
+        return t('No se encontró un archivo o una carpeta necesarios: ', 'A required file or folder was not found: ') + str(exc.filename or '')
+    if isinstance(exc, OSError):
+        location = str(exc.filename or '')
+        return t('Windows no permitió acceder a un archivo o una carpeta. Cierra Tibia y comprueba los permisos. ',
+                 'Windows could not access a file or folder. Close Tibia and check permissions. ') + location
+    if isinstance(exc, (json.JSONDecodeError, KeyError, TypeError)):
+        return t('El manifiesto o registro del respaldo tiene un formato inválido. No continúes con ese archivo.',
+                 'The manifest or backup record has an invalid format. Do not continue with that file.')
+    return str(exc)
 
 
 if __name__ == '__main__':
+    for stream in (sys.stdin, sys.stdout, sys.stderr):
+        if hasattr(stream, 'reconfigure'):
+            stream.reconfigure(encoding='utf-8', errors='replace')
     interactive_exe = bool(getattr(sys, 'frozen', False)) and len(sys.argv) == 1
-    if interactive_exe:
-        sys.argv.append('--repair')
     exit_code = 0
     result = None
     try:
         result = main()
     except KeyboardInterrupt:
-        print('\nOperacion cancelada por el usuario.', flush=True)
+        print(t('\nOperación cancelada por el usuario.', '\nOperation cancelled by the user.'), flush=True)
         exit_code = 1
     except Exception as exc:
-        print('ERROR: ' + str(exc), file=sys.stderr)
+        print('ERROR: ' + error_message(exc), file=sys.stderr)
         exit_code = 1
     if interactive_exe and result is not False:
         try:
-            input('\nPresiona Enter para cerrar...')
+            input(t('\nPresiona Enter para cerrar...', '\nPress Enter to close...'))
         except (EOFError, KeyboardInterrupt):
             pass
     sys.exit(exit_code)
