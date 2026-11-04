@@ -1,0 +1,15 @@
+/.venv/
+/build/
+/dist/
+__pycache__/
+*.py[cod]
+*.exe
+*.spec
+*.log
+.env
+*.pfx
+*.p12
+*.pem
+*.key
+/Tibia/
+Tibia-respaldo-*/
