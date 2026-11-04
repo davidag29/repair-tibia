@@ -1,6 +1,6 @@
 # S-Repair for Tibia
 
-**S. Tensen · v1.1.1 · Windows x64 · Español / English**
+**S. Tensen · Versión 1 / Version 1 · Windows x64 · Español / English**
 
 [Español](#espanol) | [English](#english) | [Descargas / Downloads](https://github.com/davidag29/repair-tibia/releases)
 
@@ -19,13 +19,14 @@ Descarga el ejecutable desde [la última versión publicada](https://github.com/
 
 **¿Windows bloquea la aplicación?** Consulta la [guía con capturas de Control inteligente de aplicaciones](docs/windows-app-control.md#espanol). Explica cómo revisar la configuración y las consecuencias de cambiarla; no es un requisito desactivar la protección.
 
-1. Abre el ejecutable: aparece directamente toda la descripción del proceso y sus avisos, en español.
-2. En esa misma pantalla, usa **L — Language: English / Español** para cambiar el idioma, **R — Respaldos / Restaurar**, **S — Confirmar e iniciar** o **N — Salir**. Enter sale sin cambios. Al elegir L, selecciona 1 para español o 2 para inglés; vuelve automáticamente a la descripción. Enter conserva el idioma y 0 vuelve sin cambiarlo.
-3. Si no encuentra la instalación habitual, indica la carpeta que contiene `Tibia.exe`. Puedes pegar una ruta con espacios, entre comillas, o la ruta al ejecutable. **Una respuesta vacía cierra el reparador sin cambios.** Si la ruta es incorrecta, puedes reintentarlo.
+1. Abre el ejecutable: las opciones aparecen arriba, con **Reparar** primero y **Language: English / Español** destacado. La descripción del proceso y los avisos aparecen debajo.
+2. Usa **↑ y ↓** para recorrer la lista y **Enter** para seleccionar. **Esc** sale o vuelve. Al seleccionar **Reparar** se confirma el inicio; selecciona **Salir** si no deseas continuar. También funcionan los atajos **S** para reparar, **L** para idioma, **R** para respaldos y **N** para salir. No necesitas escribir números.
+3. En **Language**, elige **Español** o **English** con las flechas y Enter. Vuelve a la descripción completa en ese idioma. Si la ventana es pequeña, usa **PgUp/PgDn** para leer el resto de la descripción sin perder de vista las opciones.
+4. Si no encuentra la instalación habitual, indica la carpeta que contiene `Tibia.exe`. Puedes pegar una ruta con espacios, entre comillas, o la ruta al ejecutable. **Una respuesta vacía cierra el reparador sin cambios.** Si la ruta es incorrecta, puedes reintentarlo.
 
 ### Reparar Tibia
 
-Lee la explicación y confirma con **S + Enter**. **N o Enter** cancelan antes de iniciar. La tecla Y también se acepta por compatibilidad con versiones anteriores.
+Lee la explicación y selecciona **Reparar** con las flechas y Enter. Para cancelar, selecciona **Salir** o pulsa **Esc**. Los atajos S/Y también permiten iniciar la reparación.
 
 Si Tibia o su iniciador están abiertos, ciérralos normalmente. El reparador mantiene su ventana abierta y reinicia la comprobación cuando se cierran; no fuerza el cierre del juego.
 
@@ -55,8 +56,8 @@ Cada respaldo contiene los archivos que iban a reemplazarse y `restore.json`. **
 
 1. Abre el programa y, en la pantalla de descripción, pulsa **R — Respaldos / Restaurar**. Puedes cambiar antes el idioma con L.
 2. Verás los últimos 20 respaldos de esa instalación, ordenados del más reciente al más antiguo, con sus rutas completas.
-3. Escribe el número correspondiente o pega la ruta de otro respaldo. Enter sin escribir nada sale sin cambios.
-4. Comprueba las rutas de instalación y respaldo. Confirma con **S + Enter**; **N o Enter** cancelan.
+3. Selecciona el respaldo con las flechas y Enter. Para uno guardado en otra ubicación, selecciona **Indicar otra carpeta de respaldo…** y pega su ruta. Una ruta vacía cancela; Esc vuelve o sale de la lista.
+4. Comprueba las rutas de instalación y respaldo. Selecciona **Sí, restaurar** y Enter para confirmar. **Cancelar** está seleccionado inicialmente; Esc también cancela.
 5. Cierra Tibia si sigue abierto. El programa verifica **todos** los archivos del respaldo antes de la primera escritura; si falta alguno o no coincide su hash, no inicia la restauración.
 6. Restaura los archivos anteriores y elimina los que fueron creados por esa reparación. Verifica los archivos restaurados y conserva el respaldo.
 
@@ -126,13 +127,14 @@ Download **`S-Repair.for.Tibia.exe`** from [the latest release](https://github.c
 
 **Is Windows blocking the app?** Read the [illustrated Smart App Control guide](docs/windows-app-control.md#english). It explains how to review the setting and the implications of changing it; disabling protection is not a requirement.
 
-1. Open the executable: the full process description and notices appear immediately, initially in Spanish.
-2. On that same screen, press **L — Language: English / Español**, then **2 — English**. The description is displayed again in English. Use **R — Backups / Restore**, **Y — Confirm and start**, or **N — Exit**. Pressing Enter at the welcome screen exits without changes. In the language selector, Enter keeps the current language and 0 returns without changing it.
-3. If the default installation cannot be found, enter the folder containing `Tibia.exe`. Quoted paths, spaces and a path to the executable itself are accepted. **An empty response closes the tool without changes.** Invalid paths can be retried.
+1. Open the executable: options appear at the top with **Repair** first and **Language: English / Español** highlighted. The process description and notices appear below, initially in Spanish.
+2. Use **↑ and ↓** to move through the list and **Enter** to select. **Esc** exits or goes back. Selecting **Repair** confirms the start; select **Exit** if you do not want to continue. Shortcuts **Y** for repair, **L** for language, **R** for backups and **N** for exit also work. No numbers are required.
+3. Select **Language**, then **English** using the arrows and Enter. The full description is displayed in that language. On smaller windows, use **PgUp/PgDn** to read the description while the options remain visible.
+4. If the default installation cannot be found, enter the folder containing `Tibia.exe`. Quoted paths, spaces and a path to the executable itself are accepted. **An empty response closes the tool without changes.** Invalid paths can be retried.
 
 ### Repair Tibia
 
-Read the explanation and confirm with **Y + Enter**. **N or Enter** cancels before repair starts.
+Read the explanation, then select **Repair** using the arrows and Enter. To cancel, select **Exit** or press **Esc**. The Y/S shortcuts can also start repair.
 
 If Tibia or its launcher is running, close it normally. The tool keeps its window open and restarts checks automatically once they close. It does not forcibly close the game.
 
@@ -162,8 +164,8 @@ Each backup contains files that were about to be replaced and `restore.json`. **
 
 1. Open the tool, optionally change the language using L, then press **R — Backups / Restore** on the description screen.
 2. The latest 20 backups for that installation are listed, newest first, with their full paths.
-3. Enter a listed number or paste another backup folder path. An empty response exits without changes.
-4. Check the installation and backup paths. Confirm with **Y + Enter**; **N or Enter** cancels.
+3. Select a backup with the arrows and Enter. For a backup stored elsewhere, choose **Enter another backup folder…** and paste its path. An empty path cancels; Esc goes back or exits the list.
+4. Check the installation and backup paths. Select **Yes, restore** and Enter to confirm. **Cancel** is initially selected; Esc also cancels.
 5. Close Tibia if it is running. The tool verifies **all** backup files before the first write. If any file is missing or its hash does not match, restoration does not start.
 6. Previous files are restored, and files created by that repair are removed. Restored files are verified and the backup is kept.
 

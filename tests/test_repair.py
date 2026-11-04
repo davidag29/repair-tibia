@@ -17,6 +17,23 @@ original_require_closed = m.require_closed
 original_fetch = m.fetch
 m.require_closed = lambda root: None
 
+# Navegación real del controlador de teclado, sin escribir números.
+options = [('uno', 1), ('dos', 2), ('salir', None)]
+for keys, result in [(['down', 'enter'], 2), (['up', 'enter'], None),
+                     (['end', 'up', 'enter'], 2), (['down', 'home', 'enter'], 1),
+                     (['escape'], None)]:
+    with patch.object(m, 'read_key', side_effect=keys), patch('sys.stdout', new_callable=io.StringIO):
+        assert m.native_select(options, 'Prueba') == result
+with patch.object(m, 'keyboard_available', return_value=True), \
+     patch.object(m, 'read_key', side_effect=['down', 'enter', 'down', 'enter', 'escape']), \
+     patch('sys.stdout', new_callable=io.StringIO) as output:
+    assert m.welcome_choice(Path('Tibia')) is None
+    assert m.LANGUAGE == 'en'
+    screen = output.getvalue()
+    assert screen.index('[S] Reparar') < screen.index('[L] Language:') < screen.index('QUÉ HARÁ EL ASISTENTE')
+    assert 'WHAT THE ASSISTANT WILL DO' in screen
+m.LANGUAGE = 'es'
+
 # Carpeta alternativa, rutas entre comillas, reintentos y salida vacia.
 with tempfile.TemporaryDirectory() as temp:
     valid = Path(temp) / 'Tibia alternativo'
@@ -43,7 +60,7 @@ with tempfile.TemporaryDirectory() as temp:
 for reply, expected_result in [('Y', 'repair'), ('y', 'repair'), ('s', 'repair'), ('R', 'restore'), ('N', None), ('', None)]:
     with patch('builtins.input', return_value=reply), patch('sys.stdout', new_callable=io.StringIO) as output:
         assert m.welcome_choice(Path('Tibia')) == expected_result
-        assert '¿QUIERES REPARAR TIBIA?' in output.getvalue()
+        assert '[S] Reparar' in output.getvalue()
         assert 'S-Repair for Tibia' in output.getvalue()
         assert 'Autor: S. Tensen' in output.getvalue()
         assert 'sin aprobación' in output.getvalue()
@@ -130,7 +147,7 @@ with tempfile.TemporaryDirectory() as temp:
         except ValueError:
             pass
 # Idiomas y menús: confirmar, salir y reintentar respuestas incorrectas.
-for language, confirm_word in [('es', '¿QUIERES REPARAR TIBIA?'), ('en', 'DO YOU WANT TO REPAIR TIBIA?')]:
+for language, confirm_word in [('es', '[S] Reparar'), ('en', '[Y] Repair')]:
     m.LANGUAGE = language
     with patch('builtins.input', return_value='N'), patch('sys.stdout', new_callable=io.StringIO) as output:
         assert m.welcome_choice(Path('Tibia')) is None
@@ -168,6 +185,13 @@ with tempfile.TemporaryDirectory() as temp:
         {'path': 'other.dll', 'existed': True, 'backup_hash': m.digest(b'original dll')}]}
     (backup / 'restore.json').write_text(json.dumps(journal), encoding='utf-8')
     assert m.find_backups(root) == [backup]
+    with patch.object(m, 'keyboard_available', return_value=True), \
+         patch.object(m, 'read_key', side_effect=['enter']), patch('sys.stdout', new_callable=io.StringIO):
+        assert m.select_backup(root) == backup
+    for keys, confirmed in [(['enter'], False), (['up', 'enter'], True), (['escape'], False)]:
+        with patch.object(m, 'keyboard_available', return_value=True), \
+             patch.object(m, 'read_key', side_effect=keys), patch('sys.stdout', new_callable=io.StringIO):
+            assert m.confirm_restore(root, backup) is confirmed
     for choice in ['1', '"' + str(backup) + '"', str(backup / 'restore.json')]:
         with patch('builtins.input', return_value=choice), patch('sys.stdout', new_callable=io.StringIO):
             assert m.select_backup(root) == backup

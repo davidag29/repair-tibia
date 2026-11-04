@@ -4,7 +4,9 @@ Open the executable for the description: L changes language and R opens backups.
 Código fuente / Source: python src/srepair.py --menu
 """
 import argparse
+import contextlib
 import hashlib
+import io
 import json
 import lzma
 import os
@@ -23,7 +25,7 @@ ORIGIN = 'https://static.tibia.com/launcher/'
 PROTECTED = {'conf', 'minimap', 'characterdata', 'screenshots', 'log', 'cache'}
 APP_NAME = 'S-Repair for Tibia'
 AUTHOR = 'S. Tensen'
-VERSION = '1.1.1'
+VERSION = '1'
 LANGUAGE = 'es'
 
 
@@ -40,6 +42,14 @@ def ask(prompt):
 
 def choose_language():
     global LANGUAGE
+    if keyboard_available():
+        selected = native_select([('Español', 'es'), ('English', 'en'),
+                                  (t('Volver', 'Back'), None)],
+                                 'Language: English / Español', default=0 if LANGUAGE == 'es' else 1)
+        if selected is not None:
+            LANGUAGE = selected
+            return True
+        return False
     print('\n' + APP_NAME + ' ' + VERSION + ' | ' + AUTHOR, flush=True)
     print('\n[1] Español\n[2] English\n[0] Volver / Back', flush=True)
     while True:
@@ -80,8 +90,80 @@ def console_colors():
         return False
 
 
-def show_welcome(root):
-    colors = console_colors()
+def keyboard_available():
+    return os.name == 'nt' and sys.stdin.isatty() and sys.stdout.isatty() and console_colors()
+
+
+def read_key():
+    import msvcrt
+    key = msvcrt.getwch()
+    if key in ('\x00', '\xe0'):
+        return {'H': 'up', 'P': 'down', 'G': 'home', 'O': 'end',
+                'I': 'pageup', 'Q': 'pagedown'}.get(msvcrt.getwch(), '')
+    if key == '\x03':
+        raise KeyboardInterrupt()
+    return {'\r': 'enter', '\n': 'enter', '\x1b': 'escape'}.get(key, key.lower())
+
+
+def native_select(options, heading='', default=0, shortcuts=None, render=None, detail_marker=None):
+    """Lista de Windows: flechas/Enter/Esc. No escribe en la instalación."""
+    selected, offset = default, 0
+    try:
+        print('\033[?25l', end='', flush=True)
+        while True:
+            height = max(shutil.get_terminal_size((100, 32)).lines, 10)
+            width = max(shutil.get_terminal_size((100, 32)).columns - 1, 40)
+            if render:
+                output = io.StringIO()
+                with contextlib.redirect_stdout(output):
+                    render(selected)
+                lines = output.getvalue().splitlines()
+                split = next((i for i, line in enumerate(lines) if detail_marker and detail_marker in line), len(lines))
+                head, body = lines[:split], lines[split:]
+                room = max(height - len(head) - 2, 1)
+                offset = min(offset, max(len(body) - room, 0))
+                visible = head + body[offset:offset + room]
+            else:
+                head = []
+                for line in heading.splitlines():
+                    head.extend(textwrap.wrap(line, width=width) or [''])
+                room = max(height - len(head) - 4, 1)
+                first = max(0, min(selected - room + 1, len(options) - room))
+                visible = head + ['']
+                for index in range(first, min(first + room, len(options))):
+                    label = ('> ' if index == selected else '  ') + options[index][0]
+                    visible.append(('\033[1;30;106m' + label[:width].ljust(width) + '\033[0m')
+                                   if index == selected else label[:width])
+            hint = t('↑/↓ elegir · Enter seleccionar · Esc volver/salir',
+                     '↑/↓ choose · Enter select · Esc back/exit')
+            if render:
+                hint += t(' · PgUp/PgDn descripción', ' · PgUp/PgDn description')
+            print('\033[2J\033[H' + '\n'.join(visible[:height - 2]) + '\n' + hint[:width], end='', flush=True)
+            key = read_key()
+            if key == 'up':
+                selected = (selected - 1) % len(options)
+            elif key == 'down':
+                selected = (selected + 1) % len(options)
+            elif key == 'home':
+                selected = 0
+            elif key == 'end':
+                selected = len(options) - 1
+            elif key == 'pagedown':
+                offset += room
+            elif key == 'pageup':
+                offset = max(0, offset - room)
+            elif key == 'enter':
+                return options[selected][1]
+            elif key == 'escape':
+                return None
+            elif shortcuts and key in shortcuts:
+                return shortcuts[key]
+    finally:
+        print('\033[0m\033[?25h\n', end='', flush=True)
+
+
+def show_welcome(root, selected=None):
+    colors = console_colors() if selected is None else True
     def style(text, color):
         return f'\033[{color}m{text}\033[0m' if colors else text
     width = min(max(shutil.get_terminal_size((78, 25)).columns - 2, 42), 76)
@@ -98,6 +180,15 @@ def show_welcome(root):
     row(t('Archivos oficiales / Respaldo automático', 'Official files / Automatic backup'), center=True)
     print(style(border, '36'), flush=True)
     row()
+    choices = [(t('[S] Reparar', '[Y] Repair'), '1;37'),
+               ('[L] Language: English / Español', '1;96'),
+               (t('[R] Respaldos / Restaurar', '[R] Backups / Restore'), None),
+               (t('[N] Salir', '[N] Exit'), None)]
+    for index, (label, color) in enumerate(choices):
+        row(('> ' if selected == index else '  ') + label,
+            '1;30;106' if selected == index else color, center=True)
+    row(t('Selecciona Reparar para confirmar e iniciar.', 'Select Repair to confirm and start.'), center=True)
+    row()
     row(t('QUÉ HARÁ EL ASISTENTE', 'WHAT THE ASSISTANT WILL DO'), '1;37')
     row(t('1. Esperar a que cierres Tibia y comprobar la instalación.', '1. Wait for you to close Tibia and check the installation.'))
     row(t('2. Descargar los archivos necesarios del servidor oficial, evitando la caché antigua.', '2. Download the required files from the official server, bypassing stale cache.'))
@@ -113,16 +204,21 @@ def show_welcome(root):
     row(t('Instalación: ', 'Installation: ') + str(root))
     row(t('Los respaldos se guardan junto a esta carpeta. Usa [R] para restaurarlos.', 'Backups are saved beside this folder. Use [R] to restore them.'))
     row()
-    row(t('¿QUIERES REPARAR TIBIA?', 'DO YOU WANT TO REPAIR TIBIA?'), '1;36', center=True)
-    row('[L] Language: English / Español', '1;36', center=True)
-    row(t('[R] Respaldos / Restaurar', '[R] Backups / Restore'), '1;36', center=True)
-    row(t('[S] Confirmar e iniciar     [N] Salir', '[Y] Confirm and start     [N] Exit'), '1;37', center=True)
-    row(t('Enter sin elegir cancela la operación.', 'Pressing Enter without a choice cancels.'), center=True)
     print(style(border, '36'), flush=True)
 
 
 def welcome_choice(root):
     while True:
+        if keyboard_available():
+            choice = native_select([(t('Reparar', 'Repair'), 'repair'), ('Language', 'language'),
+                                    (t('Respaldos', 'Backups'), 'restore'), (t('Salir', 'Exit'), None)],
+                                   shortcuts={'s': 'repair', 'y': 'repair', 'l': 'language', 'r': 'restore', 'n': None},
+                                   render=lambda selected: show_welcome(root, selected),
+                                   detail_marker=t('QUÉ HARÁ EL ASISTENTE', 'WHAT THE ASSISTANT WILL DO'))
+            if choice == 'language':
+                choose_language()
+                continue
+            return choice
         show_welcome(root)
         while True:
             choice = ask(t('\nTu elección [S/N/L/R]: ', '\nYour choice [Y/N/L/R]: ')).lower()
@@ -394,6 +490,29 @@ def restore_hint(root, backup):
 
 def select_backup(root):
     backups = find_backups(root)[:20]
+    if keyboard_available():
+        error = ''
+        while True:
+            heading = (t('RESTAURAR UN RESPALDO\nCarpeta de respaldos: ', 'RESTORE A BACKUP\nBackup folder: ')
+                       + str(root.parent) + ('\n' + error if error else ''))
+            options = [(p.name, p) for p in backups]
+            options += [(t('Indicar otra carpeta de respaldo…', 'Enter another backup folder…'), 'manual'),
+                        (t('Volver / Salir', 'Back / Exit'), None)]
+            selected = native_select(options, heading)
+            if selected is None:
+                return None
+            try:
+                if selected == 'manual':
+                    answer = ask(t('Ruta del respaldo (vacío cancela): ', 'Backup path (empty cancels): '))
+                    if not answer:
+                        return None
+                    selected = Path(os.path.expandvars(answer.strip('\"\''))).expanduser().resolve()
+                    if selected.name == 'restore.json':
+                        selected = selected.parent
+                read_backup(root, selected)
+                return selected
+            except (OSError, ValueError, RuntimeError):
+                error = t('Respaldo no válido para esta instalación.', 'Invalid backup for this installation.')
     print(t('\nRESTAURAR UN RESPALDO', '\nRESTORE A BACKUP'), flush=True)
     print(t('Los respaldos se guardan junto a la instalación, en:\n  ', 'Backups are stored beside the installation, in:\n  ') + str(root.parent), flush=True)
     print('  Tibia-respaldo-AAAAMMDD-HHMMSS-*', flush=True)
@@ -428,6 +547,13 @@ def select_backup(root):
 
 
 def confirm_restore(root, backup):
+    if keyboard_available():
+        heading = t('¿Restaurar este respaldo?\nSe recuperarán archivos anteriores; el cliente puede volver a una versión antigua.\n',
+                    'Restore this backup?\nPrevious files will be recovered; the client may revert to an older version.\n')
+        heading += t('Instalación: ', 'Installation: ') + str(root) + '\n' + t('Respaldo: ', 'Backup: ') + str(backup)
+        return native_select([(t('Sí, restaurar', 'Yes, restore'), True),
+                              (t('Cancelar', 'Cancel'), False)], heading, default=1,
+                             shortcuts={'s': True, 'y': True, 'n': False}) is True
     print(t('\nSe restaurarán los archivos del respaldo y se quitarán los archivos que no existían antes de esa reparación.',
             '\nFiles will be restored from this backup. Files created by that repair will be removed.'), flush=True)
     print(t('Esto puede devolver el cliente a una versión anterior. Se conservará la carpeta del respaldo.',
