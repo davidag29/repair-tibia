@@ -4,6 +4,7 @@ import lzma
 from pathlib import Path
 import tempfile
 import io
+import re
 import sys
 from unittest.mock import patch
 
@@ -32,6 +33,28 @@ with patch.object(m, 'keyboard_available', return_value=True), \
     screen = output.getvalue()
     assert screen.index('[S] Reparar') < screen.index('[L] Language:') < screen.index('QUÉ HARÁ EL ASISTENTE')
     assert 'WHAT THE ASSISTANT WILL DO' in screen
+m.LANGUAGE = 'es'
+
+# El marco se cierra siempre, también al desplazar texto o cambiar de tamaño.
+for language in ['es', 'en']:
+    m.LANGUAGE = language
+    for columns, rows in [(80, 20), (80, 24), (80, 38), (120, 50)]:
+        with patch.object(m.shutil, 'get_terminal_size', return_value=m.os.terminal_size((columns, rows))), \
+             patch.object(m, 'read_key', side_effect=['pagedown', 'pageup', 'escape']), \
+             patch('sys.stdout', new_callable=io.StringIO) as output:
+            m.native_select(options, render=lambda selected: m.show_welcome(Path('C:/Tibia'), selected),
+                            detail_marker=m.t('QUÉ HARÁ EL ASISTENTE', 'WHAT THE ASSISTANT WILL DO'))
+        screens = output.getvalue().split('\033[2J\033[H')[1:]
+        assert len(screens) == 3
+        for screen in screens:
+            plain = re.sub(r'\x1b\[[0-9;?]*[A-Za-z]', '', screen)
+            lines = plain.splitlines()
+            while lines and not lines[-1].strip():
+                lines.pop()
+            assert len(lines) <= rows - 1
+            assert lines[-2].startswith('+') and lines[-2].endswith('+'), lines
+            assert 'PgUp/PgDn' in lines[-1]
+            assert all(len(line) < columns for line in lines)
 m.LANGUAGE = 'es'
 
 # Carpeta alternativa, rutas entre comillas, reintentos y salida vacia.

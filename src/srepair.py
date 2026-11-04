@@ -119,10 +119,12 @@ def native_select(options, heading='', default=0, shortcuts=None, render=None, d
                     render(selected)
                 lines = output.getvalue().splitlines()
                 split = next((i for i, line in enumerate(lines) if detail_marker and detail_marker in line), len(lines))
-                head, body = lines[:split], lines[split:]
-                room = max(height - len(head) - 2, 1)
+                # El borde inferior pertenece al marco fijo, no al texto desplazable.
+                head, body, bottom = lines[:split], lines[split:-1], lines[-1:]
+                head = head[:max(height - 3, 0)]
+                room = max(height - len(head) - len(bottom) - 2, 0)
                 offset = min(offset, max(len(body) - room, 0))
-                visible = head + body[offset:offset + room]
+                visible = head + body[offset:offset + room] + bottom
             else:
                 head = []
                 for line in heading.splitlines():
@@ -134,10 +136,10 @@ def native_select(options, heading='', default=0, shortcuts=None, render=None, d
                     label = ('> ' if index == selected else '  ') + options[index][0]
                     visible.append(('\033[1;30;106m' + label[:width].ljust(width) + '\033[0m')
                                    if index == selected else label[:width])
-            hint = t('↑/↓ elegir · Enter seleccionar · Esc volver/salir',
-                     '↑/↓ choose · Enter select · Esc back/exit')
+            hint = t('↑↓ Elegir · Enter Aceptar · Esc Salir',
+                     '↑↓ Choose · Enter Select · Esc Exit')
             if render:
-                hint += t(' · PgUp/PgDn descripción', ' · PgUp/PgDn description')
+                hint += t(' · PgUp/PgDn Leer', ' · PgUp/PgDn Read')
             print('\033[2J\033[H' + '\n'.join(visible[:height - 2]) + '\n' + hint[:width], end='', flush=True)
             key = read_key()
             if key == 'up':
