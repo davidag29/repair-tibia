@@ -17,6 +17,8 @@ Asistente independiente para instalaciones de Tibia cuyo cliente no se actualiza
 
 Descarga el ejecutable desde [la última versión publicada](https://github.com/davidag29/repair-tibia/releases/latest). El archivo de GitHub se llama **`S-Repair.for.Tibia.exe`**. Incluye Python y sus dependencias; no necesitas instalar Python para utilizarlo.
 
+**¿Windows bloquea la aplicación?** Consulta la [guía con capturas de Control inteligente de aplicaciones](docs/windows-app-control.md#espanol). Explica cómo revisar la configuración y las consecuencias de cambiarla; no es un requisito desactivar la protección.
+
 1. Abre el ejecutable: aparece directamente toda la descripción del proceso y sus avisos, en español.
 2. En esa misma pantalla, usa **L — Language: English / Español** para cambiar el idioma, **R — Respaldos / Restaurar**, **S — Confirmar e iniciar** o **N — Salir**. Enter sale sin cambios. Al elegir L, selecciona 1 para español o 2 para inglés; vuelve automáticamente a la descripción. Enter conserva el idioma y 0 vuelve sin cambiarlo.
 3. Si no encuentra la instalación habitual, indica la carpeta que contiene `Tibia.exe`. Puedes pegar una ruta con espacios, entre comillas, o la ruta al ejecutable. **Una respuesta vacía cierra el reparador sin cambios.** Si la ruta es incorrecta, puedes reintentarlo.
@@ -121,6 +123,8 @@ An independent assistant for Tibia installations that do not update correctly. I
 ### Download and start
 
 Download **`S-Repair.for.Tibia.exe`** from [the latest release](https://github.com/davidag29/repair-tibia/releases/latest). Python and its dependencies are included; you do not need to install Python to use it.
+
+**Is Windows blocking the app?** Read the [illustrated Smart App Control guide](docs/windows-app-control.md#english). It explains how to review the setting and the implications of changing it; disabling protection is not a requirement.
 
 1. Open the executable: the full process description and notices appear immediately, initially in Spanish.
 2. On that same screen, press **L — Language: English / Español**, then **2 — English**. The description is displayed again in English. Use **R — Backups / Restore**, **Y — Confirm and start**, or **N — Exit**. Pressing Enter at the welcome screen exits without changes. In the language selector, Enter keeps the current language and 0 returns without changing it.
