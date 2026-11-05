@@ -11,12 +11,12 @@ Esta guía corresponde a **Smart App Control en Windows 11**. Si el aviso identi
 
 ### Antes de cambiar la configuración
 
-La versión actual de S-Repair for Tibia **no tiene firma digital Authenticode**. El nombre S. Tensen identifica al autor; no es un certificado. Microsoft indica que Smart App Control no ofrece una excepción para una sola aplicación y puede bloquear código desconocido sin firma. [FAQ de Microsoft](https://support.microsoft.com/en-us/windows/security/threat-malware-protection/smart-app-control-frequently-asked-questions).
+El Asistente de reparación **no tiene firma digital Authenticode**. Microsoft indica que Smart App Control no ofrece una excepción para una sola aplicación y puede bloquear código desconocido sin firma. [FAQ de Microsoft](https://support.microsoft.com/en-us/windows/security/threat-malware-protection/smart-app-control-frequently-asked-questions).
 
 Descarga el programa únicamente desde [las versiones de este repositorio](https://github.com/davidag29/repair-tibia/releases) y compara su SHA-256 con el publicado en la versión correspondiente:
 
 ```powershell
-Get-FileHash -LiteralPath '.\S-Repair.for.Tibia.exe' -Algorithm SHA256
+Get-FileHash -LiteralPath '.\Repair.Assistant.exe' -Algorithm SHA256
 ```
 
 La coincidencia del hash identifica la copia publicada; no sustituye un análisis de seguridad ni una firma digital.
@@ -45,7 +45,7 @@ Comprueba el estado y lee el aviso que muestra **tu equipo**. La siguiente captu
 
 ![Referencia: Control inteligente de aplicaciones desactivado y aviso de esa instalación](images/windows-security-04.png)
 
-**Si decides desactivar esta protección para intentar ejecutar la aplicación**, selecciona **Desactivado** y lee la confirmación de Windows antes de aceptarla. El cambio es global: afecta a otras aplicaciones del equipo, no solo a S-Repair. Es una decisión manual del propietario del equipo, no un paso que ejecute el reparador. Si no deseas reducir esa protección, conserva el estado actual y no ejecutes esta versión.
+**Si decides desactivar esta protección para intentar ejecutar la aplicación**, selecciona **Desactivado** y lee la confirmación de Windows antes de aceptarla. El cambio es global: afecta a otras aplicaciones del equipo, no solo al Asistente de reparación. Es una decisión manual del propietario del equipo, no un paso que ejecute el reparador. Si no deseas reducir esa protección, conserva el estado actual y no ejecutes esta versión.
 
 La captura indica que se necesita reinstalar Windows para reactivarlo en esa instalación. **No es una regla universal para todos los equipos actuales:** Microsoft documenta que actualizaciones recientes permiten reactivarlo sin reinstalar en equipos compatibles; ciertas configuraciones aún pueden requerir restablecer o reinstalar Windows. Consulta el aviso local y la [FAQ vigente](https://support.microsoft.com/en-us/windows/security/threat-malware-protection/smart-app-control-frequently-asked-questions) antes de cambiarlo.
 
@@ -68,12 +68,12 @@ This guide applies to **Smart App Control on Windows 11**. If the message names 
 
 ### Before changing settings
 
-The current S-Repair for Tibia executable **is not Authenticode-signed**. S. Tensen is an author credit, not a certificate. Microsoft states that Smart App Control has no per-app exception and may block unknown unsigned code. [Microsoft FAQ](https://support.microsoft.com/en-us/windows/security/threat-malware-protection/smart-app-control-frequently-asked-questions).
+The Repair assistant executable **is not Authenticode-signed**. Microsoft states that Smart App Control has no per-app exception and may block unknown unsigned code. [Microsoft FAQ](https://support.microsoft.com/en-us/windows/security/threat-malware-protection/smart-app-control-frequently-asked-questions).
 
 Download only from [this repository's releases](https://github.com/davidag29/repair-tibia/releases) and compare the SHA-256 with the one published for that release:
 
 ```powershell
-Get-FileHash -LiteralPath '.\S-Repair.for.Tibia.exe' -Algorithm SHA256
+Get-FileHash -LiteralPath '.\Repair.Assistant.exe' -Algorithm SHA256
 ```
 
 A matching hash identifies the published copy; it does not replace a security review or digital signature.
@@ -102,7 +102,7 @@ Check the state and read the notice shown on **your device**. The screenshot bel
 
 ![Reference: Smart App Control off, with that installation's notice; screenshot in Spanish](images/windows-security-04.png)
 
-**If you decide to turn this protection off to try running the application**, select **Off** and read the Windows confirmation before accepting it. This is a global change affecting other apps, not just S-Repair. It is a manual decision by the device owner, not an action performed by this tool. If you do not want to reduce that protection, keep the current setting and do not run this release.
+**If you decide to turn this protection off to try running the application**, select **Off** and read the Windows confirmation before accepting it. This is a global change affecting other apps, not just Repair assistant. It is a manual decision by the device owner, not an action performed by this tool. If you do not want to reduce that protection, keep the current setting and do not run this release.
 
 This screenshot says that reinstalling Windows is required to turn it back on for that installation. **That is not universal for current devices:** Microsoft documents that recent updates allow re-enabling it without reinstalling on eligible devices; some configurations can still require resetting or reinstalling Windows. Read your local notice and the [current FAQ](https://support.microsoft.com/en-us/windows/security/threat-malware-protection/smart-app-control-frequently-asked-questions) before changing it.
 

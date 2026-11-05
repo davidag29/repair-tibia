@@ -5,6 +5,7 @@ Código fuente / Source: python src/srepair.py --menu
 """
 import argparse
 import contextlib
+import contextvars
 import hashlib
 import io
 import json
@@ -25,8 +26,50 @@ ORIGIN = 'https://static.tibia.com/launcher/'
 PROTECTED = {'conf', 'minimap', 'characterdata', 'screenshots', 'log', 'cache'}
 APP_NAME = 'S-Repair for Tibia'
 AUTHOR = 'S. Tensen'
-VERSION = '1'
+VERSION = '2'
 LANGUAGE = 'es'
+_operation = contextvars.ContextVar('srepair_operation', default=None)
+
+
+@contextlib.contextmanager
+def operation_events(receiver, cancel, confirm=None):
+    """Thread-local UI adapter; terminal callers retain their existing behavior."""
+    token = _operation.set({'receiver': receiver, 'cancel': cancel, 'confirm': confirm})
+    try:
+        yield
+    finally:
+        _operation.reset(token)
+
+
+def emit(event):
+    operation = _operation.get()
+    if operation:
+        operation['receiver'](event)
+
+
+def say(text):
+    if _operation.get():
+        emit({'kind': 'message', 'text': text})
+    else:
+        print(text, flush=True)
+
+
+def operation_cancel():
+    operation = _operation.get()
+    return operation['cancel'] if operation else None
+
+
+def critical_phase(phase):
+    # Once writes start, finish or recover before honoring a close request.
+    emit({'kind': 'critical', 'phase': phase})
+
+
+def refresh_after_wait(root):
+    bundles = plans(root, receiver=(_operation.get() or {}).get('receiver'), cancel=operation_cancel())
+    operation = _operation.get()
+    if operation and operation['confirm'] and not operation['confirm'](bundles):
+        raise DiagnosisCancelled()
+    return bundles
 
 
 def t(spanish, english):
@@ -253,10 +296,19 @@ class Progress:
         self.last = 0
         self.bucket = -1
         self.width = 0
-        self.tty = sys.stdout.isatty()
+        self.receiver = (_operation.get() or {}).get('receiver')
+        self.tty = bool(not self.receiver and sys.stdout and sys.stdout.isatty())
+        if self.receiver:
+            self.receiver({'kind': 'operation_phase', 'label': label, 'total': self.total})
 
     def update(self, done, detail='', force=False):
         now = time.monotonic()
+        if self.receiver:
+            if force or now - self.last >= .12 or done >= self.total:
+                self.last = now
+                self.receiver({'kind': 'operation_progress', 'label': self.label, 'done': done,
+                               'total': self.total, 'file': detail, 'bytes': self.byte_units})
+            return
         fraction = min(max(done / self.total, 0), 1) if self.total else 1
         bucket = int(fraction * 4)
         if not force and ((self.tty and now - self.last < .12) or
@@ -298,31 +350,48 @@ def digest(data):
     return hashlib.sha256(data).hexdigest()
 
 
-def fetch(relative, progress=None):
+class DiagnosisCancelled(Exception):
+    """Cooperative cancellation at a read-only diagnostic boundary."""
+
+
+def check_cancel(cancel):
+    if cancel is not None and cancel.is_set():
+        raise DiagnosisCancelled()
+
+
+def fetch(relative, progress=None, cancel=None):
+    cancel = cancel if cancel is not None else operation_cancel()
     url = urllib.parse.urljoin(ORIGIN, relative)
     if urllib.parse.urlsplit(url).netloc != 'static.tibia.com':
         raise ValueError(t('Servidor no permitido: ', 'Server not allowed: ') + url)
     url += ('&' if '?' in url else '?') + 'repair=' + uuid.uuid4().hex
     last = None
     for attempt in range(3):
+        check_cancel(cancel)
         try:
             request = urllib.request.Request(url, headers={'Cache-Control': 'no-cache', 'User-Agent': 'TibiaRepair/1.0'})
-            with urllib.request.urlopen(request, timeout=60) as response:
+            with urllib.request.urlopen(request, timeout=10 if cancel is not None else 60) as response:
                 final = urllib.parse.urlsplit(response.url)
                 if final.scheme != 'https' or final.netloc != 'static.tibia.com':
                     raise ValueError(t('Redirección no permitida', 'Redirect not allowed'))
                 chunks, received = [], 0
                 total = int(response.headers.get('Content-Length', 0))
                 while chunk := response.read(256 * 1024):
+                    check_cancel(cancel)
                     chunks.append(chunk)
                     received += len(chunk)
                     if progress:
                         progress(received, total)
                 return b''.join(chunks)
+        except DiagnosisCancelled:
+            raise
         except Exception as exc:
             last = exc
             if attempt < 2:
-                time.sleep(1)
+                if cancel is not None:
+                    cancel.wait(1)
+                else:
+                    time.sleep(1)
     raise RuntimeError(t('No se pudo descargar ', 'Could not download ') + relative) from last
 
 
@@ -343,7 +412,7 @@ def running(root):
     command = "Get-CimInstance Win32_Process | Where-Object ExecutablePath | Select-Object Name,ProcessId,ExecutablePath | ConvertTo-Json -Compress"
     result = subprocess.run(['powershell.exe', '-NoProfile', '-NonInteractive', '-Command', command],
                             capture_output=True, text=True, check=True,
-                            creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
+                            creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0), timeout=20)
     rows = json.loads(result.stdout or '[]')
     if isinstance(rows, dict):
         rows = [rows]
@@ -354,6 +423,18 @@ def running(root):
 
 
 def require_closed(root):
+    if _operation.get():
+        waited = False
+        while True:
+            check_cancel(operation_cancel())
+            active = running(root)
+            if not active:
+                if waited:
+                    say(t('Tibia está cerrado. Reiniciando la comprobación.', 'Tibia is closed. Restarting checks.'))
+                return waited
+            waited = True
+            emit({'kind': 'waiting', 'names': ', '.join(sorted({row['Name'] for row in active}))})
+            operation_cancel().wait(2)
     active = running(root)
     if not active:
         return False
@@ -408,18 +489,38 @@ def decode_verified(packed, entry):
     raise ValueError(t('Archivo descomprimido inválido: ', 'Invalid decompressed file: ') + entry['localfile'])
 
 
-def matches(path, entry):
+def matches(path, entry, cancel=None):
+    cancel = cancel if cancel is not None else operation_cancel()
     if not path.is_file():
         return False
     size = entry.get('unpackedsize', entry.get('packedsize'))
     if size is not None and path.stat().st_size != size:
         return False
     with path.open('rb') as stream:
+        if cancel is not None:
+            hasher = hashlib.sha256()
+            while chunk := stream.read(1024 * 1024):
+                check_cancel(cancel)
+                hasher.update(chunk)
+            check_cancel(cancel)
+            return hasher.hexdigest() == expected(entry)
         return hashlib.file_digest(stream, 'sha256').hexdigest() == expected(entry)
 
 
-def plans(root):
-    print(t('\n[1/4] COMPROBAR ARCHIVOS\nConsultando la versión oficial sin caché...', '\n[1/4] CHECK FILES\nChecking the official version without stale cache...'), flush=True)
+def plans(root, receiver=None, cancel=None):
+    def message(text):
+        if receiver:
+            receiver({'kind': 'message', 'text': text})
+        else:
+            print(text, flush=True)
+
+    def download(relative):
+        check_cancel(cancel)
+        if receiver:
+            receiver({'kind': 'stage', 'stage': 'manifest', 'file': relative})
+        return fetch(relative, cancel=cancel) if cancel is not None else fetch(relative)
+
+    message(t('\n[1/4] COMPROBAR ARCHIVOS\nConsultando la versión oficial sin caché...', '\n[1/4] CHECK FILES\nChecking the official version without stale cache...'))
     client = root / 'packages' / 'Tibia'
     result = []
     for label, base, folder in [('launcher', 'launcher-windows-current/', root),
@@ -428,12 +529,12 @@ def plans(root):
         display_label = {'launcher': t('iniciador', 'launcher'), 'cliente': t('cliente', 'client'),
                          'assets': t('recursos', 'assets')}[label]
         name = 'assets.json' if label == 'assets' else 'package.json'
-        raw = fetch(base + name)
+        raw = download(base + name)
         manifest = json.loads(raw)
-        if not isinstance(manifest.get('files'), list) or not manifest['files']:
+        if not isinstance(manifest, dict) or not isinstance(manifest.get('files'), list) or not manifest['files']:
             raise ValueError(t('Manifiesto vacío o inválido: ', 'Empty or invalid manifest: ') + display_label)
         marker_name = 'assets.json.sha256' if label == 'assets' else 'package.json.version'
-        marker = fetch(base + marker_name).decode('ascii').strip()
+        marker = download(base + marker_name).decode('ascii').strip()
         if label == 'assets':
             if marker != digest(raw):
                 raise ValueError(t('El hash del manifiesto de recursos no coincide; vuelve a intentar.', 'Assets manifest hash mismatch; please try again.'))
@@ -442,18 +543,56 @@ def plans(root):
         entries = [e for e in manifest['files']
                    if e['localfile'].replace('\\', '/').split('/')[0].lower() not in PROTECTED]
         changes = []
-        progress = Progress(t('Revisando ', 'Checking ') + display_label, len(entries))
+        progress = None if receiver else Progress(t('Revisando ', 'Checking ') + display_label, len(entries))
         for index, entry in enumerate(entries, 1):
-            progress.update(index - 1, entry['localfile'])
-            if not matches(safe_path(folder, entry['localfile']), entry):
+            check_cancel(cancel)
+            if progress:
+                progress.update(index - 1, entry['localfile'])
+            elif index == 1 or index % 10 == 0:
+                receiver({'kind': 'progress', 'stage': 'checking', 'bundle': display_label,
+                          'bundle_index': len(result), 'done': index - 1,
+                          'total': len(entries), 'file': entry['localfile']})
+            path = safe_path(folder, entry['localfile'])
+            valid = matches(path, entry, cancel=cancel) if cancel is not None else matches(path, entry)
+            if not valid:
                 changes.append(entry)
-        progress.finish()
-        print(t('{label}: versión {version}; {count} de {total} archivos requieren reemplazo.',
+        if progress:
+            progress.finish()
+        else:
+            receiver({'kind': 'progress', 'stage': 'checking', 'bundle': display_label,
+                      'bundle_index': len(result), 'done': len(entries), 'total': len(entries), 'file': ''})
+        message(t('{label}: versión {version}; {count} de {total} archivos requieren reemplazo.',
                 '{label}: version {version}; {count} of {total} files need replacement.').format(
-                    label=display_label, version=manifest.get('version', marker[:12]), count=len(changes), total=len(manifest['files'])), flush=True)
+                    label=display_label, version=manifest.get('version', marker[:12]), count=len(changes), total=len(manifest['files'])))
         result.append(dict(label=label, base=base, folder=folder, raw=raw, name=name,
                            marker=marker, marker_name=marker_name, changes=changes))
     return result
+
+
+def recognizable_installation(root):
+    return ((root / 'Tibia.exe').is_file() or
+            (root / 'packages' / 'Tibia' / 'package.json').is_file() or bool(find_backups(root)))
+
+
+def diagnose(root, receiver, cancel):
+    """Read-only diagnostic; GUI consumers receive plain data, never terminal output."""
+    try:
+        check_cancel(cancel)
+        if not recognizable_installation(root):
+            raise ValueError(t('No encontramos Tibia en esta carpeta. Selecciona la carpeta que contiene Tibia.exe.',
+                               'Tibia was not found here. Select the folder containing Tibia.exe.'))
+        bundles = plans(root, receiver=receiver, cancel=cancel)
+        check_cancel(cancel)
+        result = {'kind': 'result', 'files': sum(len(b['changes']) for b in bundles),
+                  'bytes': sum(e['packedsize'] for b in bundles for e in b['changes']),
+                  'changes': [str(safe_path(b['folder'], e['localfile']).relative_to(root))
+                              for b in bundles for e in b['changes']]}
+        receiver(result)
+        return result
+    except DiagnosisCancelled:
+        receiver({'kind': 'cancelled'})
+    except Exception as exc:
+        receiver({'kind': 'error', 'text': error_message(exc)})
 
 
 def read_backup(root, backup):
@@ -480,14 +619,18 @@ def find_backups(root):
 
 
 def restore_hint(root, backup):
-    print(t('\nUbicación del respaldo: ', '\nBackup location: ') + str(backup), flush=True)
-    print(t('Para restaurarlo, vuelve a abrir el programa y elige [R] Respaldos.',
-            'To restore it, reopen the program and choose [R] Backups.'), flush=True)
-    print(t('También puedes usar este comando en PowerShell:', 'You can also use this PowerShell command:'), flush=True)
+    if _operation.get():
+        emit({'kind': 'backup', 'path': str(backup)})
+        say(t('Respaldo conservado: ', 'Backup retained: ') + str(backup))
+        return
+    say(t('\nUbicación del respaldo: ', '\nBackup location: ') + str(backup))
+    say(t('Para restaurarlo, vuelve a abrir el programa y elige [R] Respaldos.',
+            'To restore it, reopen the program and choose [R] Backups.'))
+    say(t('También puedes usar este comando en PowerShell:', 'You can also use this PowerShell command:'))
     exe = Path(sys.executable) if getattr(sys, 'frozen', False) else Path(__file__).resolve()
     prefix = '& ' if getattr(sys, 'frozen', False) else 'python '
     quote = lambda value: "'" + str(value).replace("'", "''") + "'"
-    print(prefix + quote(exe) + ' --root ' + quote(root) + ' --restore ' + quote(backup), flush=True)
+    say(prefix + quote(exe) + ' --root ' + quote(root) + ' --restore ' + quote(backup))
 
 
 def select_backup(root):
@@ -578,6 +721,7 @@ def validate_backup(root, backup):
     progress = Progress(t('Verificando respaldo', 'Verifying backup'), len(journal['files']))
     try:
         for index, item in enumerate(journal['files'], 1):
+            check_cancel(operation_cancel())
             relative = item['path']
             if not isinstance(relative, str) or type(item['existed']) is not bool:
                 raise ValueError(t('Registro de respaldo inválido.', 'Invalid backup record.'))
@@ -606,6 +750,10 @@ def restore(root, backup):
     # Verificar TODOS los archivos antes de la primera escritura.
     checked = validate_backup(root, backup)
     require_closed(root)
+    check_cancel(operation_cancel())
+    if _operation.get():
+        restore_hint(root, backup)
+    critical_phase('restore')
     progress = Progress(t('Restaurando', 'Restoring'), len(checked))
     failures = []
     try:
@@ -630,17 +778,17 @@ def restore(root, backup):
         restore_hint(root, backup)
         raise RuntimeError(t('Restauración incompleta. Cierra Tibia, comprueba los permisos y vuelve a intentarlo. Archivos pendientes: ',
                              'Restore incomplete. Close Tibia, check permissions and try again. Remaining files: ') + ', '.join(failures))
-    print(t('\n[OK] RESTAURACIÓN COMPLETADA. El respaldo se conserva.', '\n[OK] RESTORE COMPLETED. The backup has been kept.'), flush=True)
+    say(t('\n[OK] RESTAURACIÓN COMPLETADA. El respaldo se conserva.', '\n[OK] RESTORE COMPLETED. The backup has been kept.'))
 
 
 def repair(root, bundles, verify_only=False):
     if not verify_only:
         if require_closed(root):
-            bundles = plans(root)
+            bundles = refresh_after_wait(root)
     total_files = sum(len(b['changes']) for b in bundles)
     total_bytes = sum(e['packedsize'] for b in bundles for e in b['changes'])
-    print(t('\n[2/4] DESCARGAR Y VERIFICAR\n{count} archivos | {size} de descarga',
-            '\n[2/4] DOWNLOAD AND VERIFY\n{count} files | {size} to download').format(count=total_files, size=human_bytes(total_bytes)), flush=True)
+    say(t('\n[2/4] DESCARGAR Y VERIFICAR\n{count} archivos | {size} de descarga',
+            '\n[2/4] DOWNLOAD AND VERIFY\n{count} files | {size} to download').format(count=total_files, size=human_bytes(total_bytes)))
     download_progress = Progress(t('Descarga', 'Download'), total_bytes, byte_units=True)
     completed_bytes, completed_files = 0, 0
     with tempfile.TemporaryDirectory(prefix='tibia-repair-') as temp:
@@ -648,10 +796,13 @@ def repair(root, bundles, verify_only=False):
         replacements = {}
         for bundle in bundles:
             for index, entry in enumerate(bundle['changes'], 1):
+                check_cancel(operation_cancel())
                 detail = f'{completed_files + 1}/{total_files} {entry["localfile"]}'
                 download_progress.update(completed_bytes, detail, force=True)
                 def on_chunk(received, total):
                     download_progress.update(completed_bytes + received, detail)
+                    emit({'kind': 'file_progress', 'done': received, 'total': total,
+                          'file': entry['localfile']})
                 try:
                     packed = fetch(bundle['base'] + entry['url'], progress=on_chunk)
                     data = decode_verified(packed, entry)
@@ -673,16 +824,18 @@ def repair(root, bundles, verify_only=False):
         download_progress.finish(t('{count} archivos verificados con SHA-256', '{count} files verified with SHA-256').format(count=completed_files))
         # No escribir si CipSoft publico otra version mientras se descargaba.
         for bundle in bundles:
+            check_cancel(operation_cancel())
             if digest(fetch(bundle['base'] + bundle['name'])) != digest(bundle['raw']):
                 raise RuntimeError(t('La actualización cambió en el servidor. Vuelve a ejecutar el programa.', 'The update changed on the server. Run the program again.'))
         if verify_only:
-            print(t('Todas las descargas se descomprimieron y verificaron. No se modificó la instalación.', 'All downloads were decompressed and verified. The installation was not changed.'))
+            say(t('Todas las descargas se descomprimieron y verificaron. No se modificó la instalación.', 'All downloads were decompressed and verified. The installation was not changed.'))
             return
         if require_closed(root):
-            return repair(root, plans(root))
-        print(t('\n[3/4] CREAR RESPALDO', '\n[3/4] CREATE BACKUP'), flush=True)
+            return repair(root, refresh_after_wait(root))
+        say(t('\n[3/4] CREAR RESPALDO', '\n[3/4] CREATE BACKUP'))
         backup = root.parent / ('Tibia-respaldo-' + time.strftime('%Y%m%d-%H%M%S') + '-' + uuid.uuid4().hex[:6])
         backup.mkdir()
+        emit({'kind': 'backup', 'path': str(backup)})
         journal = {'root': str(root), 'files': [], 'app_version': VERSION,
                    'created_at': time.strftime('%Y-%m-%d %H:%M:%S')}
         partials = [folder / 'partial.package.json.version' for folder in
@@ -690,6 +843,7 @@ def repair(root, bundles, verify_only=False):
         backup_targets = list(replacements) + partials
         backup_progress = Progress(t('Creando respaldo', 'Backing up'), len(backup_targets))
         for backup_index, target in enumerate(backup_targets, 1):
+            check_cancel(operation_cancel())
             relative = target.relative_to(root).as_posix()
             item = {'path': relative, 'existed': target.exists()}
             if item['existed']:
@@ -701,11 +855,13 @@ def repair(root, bundles, verify_only=False):
             backup_progress.update(backup_index, relative)
         backup_progress.finish()
         (backup / 'restore.json').write_text(json.dumps(journal, indent=2), encoding='utf-8')
-        print(t('Respaldo: ', 'Backup: ') + str(backup), flush=True)
+        say(t('Respaldo: ', 'Backup: ') + str(backup))
         # Volver a comprobar antes de la primera escritura en la instalacion.
         if require_closed(root):
-            return repair(root, plans(root))
-        print(t('\n[4/4] INSTALAR Y VERIFICAR', '\n[4/4] INSTALL AND VERIFY'), flush=True)
+            return repair(root, refresh_after_wait(root))
+        check_cancel(operation_cancel())
+        critical_phase('install')
+        say(t('\n[4/4] INSTALAR Y VERIFICAR', '\n[4/4] INSTALL AND VERIFY'))
         install_progress = Progress(t('Instalando', 'Installing'), len(replacements))
         touched = []
         try:
@@ -721,11 +877,13 @@ def repair(root, bundles, verify_only=False):
                 touched.append(partial)
                 partial.unlink()
         except (Exception, KeyboardInterrupt):
+            critical_phase('rollback')
             install_progress.clear()
-            print(t('Falló la instalación. Intentando restaurar los archivos modificados...', 'Installation failed. Attempting to restore modified files...'), flush=True)
+            say(t('Falló la instalación. Intentando restaurar los archivos modificados...', 'Installation failed. Attempting to restore modified files...'))
             lookup = {root / i['path']: i for i in journal['files']}
             rollback_failures = []
-            for target in reversed(touched):
+            recovery_progress = Progress(t('Recuperando originales', 'Recovering originals'), len(touched))
+            for recovery_index, target in enumerate(reversed(touched), 1):
                 item = lookup[target]
                 try:
                     if item['existed']:
@@ -736,17 +894,21 @@ def repair(root, bundles, verify_only=False):
                         target.unlink()
                 except OSError:
                     rollback_failures.append(str(target))
+                recovery_progress.update(recovery_index, target.name)
+            recovery_progress.finish()
             if rollback_failures:
-                print(t('RESTAURACIÓN AUTOMÁTICA INCOMPLETA. Archivos pendientes:', 'AUTOMATIC RESTORE INCOMPLETE. Remaining files:'), flush=True)
+                say(t('RESTAURACIÓN AUTOMÁTICA INCOMPLETA. Archivos pendientes:', 'AUTOMATIC RESTORE INCOMPLETE. Remaining files:'))
                 for target in rollback_failures:
-                    print('  ' + target, flush=True)
+                    say('  ' + target)
             else:
-                print(t('Los archivos modificados se restauraron desde el respaldo.', 'Modified files were restored from the backup.'), flush=True)
+                say(t('Los archivos modificados se restauraron desde el respaldo.', 'Modified files were restored from the backup.'))
             restore_hint(root, backup)
+            emit({'kind': 'recovery', 'complete': not rollback_failures, 'pending': rollback_failures})
             raise
         install_progress.finish()
-        print(t('\n[OK] REPARACIÓN COMPLETADA\nCierra este reparador y abre Tibia desde su acceso directo habitual.', '\n[OK] REPAIR COMPLETED\nClose this tool and launch Tibia from its usual shortcut.'), flush=True)
+        say(t('\n[OK] REPARACIÓN COMPLETADA\nCierra este reparador y abre Tibia desde su acceso directo habitual.', '\n[OK] REPAIR COMPLETED\nClose this tool and launch Tibia from its usual shortcut.'))
         restore_hint(root, backup)
+        return backup
 
 
 def locate_installation(root):
@@ -840,7 +1002,7 @@ def main():
 
 
 def error_message(exc):
-    if isinstance(exc, subprocess.CalledProcessError):
+    if isinstance(exc, subprocess.SubprocessError):
         return t('No se pudieron comprobar los procesos de Tibia con Windows PowerShell.',
                  'Could not check Tibia processes using Windows PowerShell.')
     if isinstance(exc, FileNotFoundError):

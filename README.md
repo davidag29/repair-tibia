@@ -1,243 +1,182 @@
-# S-Repair for Tibia
+# Asistente de reparación / Repair assistant
 
-**S. Tensen · Versión 1 / Version 1 · Windows x64 · Español / English**
+**Versión 2 / Version 2 · Portable · Windows x64 · Español / English**
 
-[Español](#espanol) | [English](#english) | [Descargas / Downloads](https://github.com/davidag29/repair-tibia/releases)
+Una herramienta independiente para comprobar, reparar y restaurar archivos de Tibia desde una interfaz gráfica.
 
-Un único ejecutable con selección de idioma, reparación y restauración de respaldos.
+An independent graphical tool to check, repair and restore Tibia files.
 
-One executable with language selection, repair and backup restoration.
+[Descargar / Download Version 2](https://github.com/davidag29/repair-tibia/releases/tag/v2) · [Español](#espanol) · [English](#english)
+
+![Interfaz / Interface](docs/images/repair-assistant.png)
 
 <a id="espanol"></a>
 ## Español
 
-Asistente independiente para instalaciones de Tibia cuyo cliente no se actualiza correctamente. Puede ayudar cuando aparece **«Tu versión del cliente es demasiado antigua. Reinicia Tibia para actualizar»**, por información de actualización almacenada en una caché antigua o por archivos dañados o desactualizados. No soluciona todas las causas posibles ni sustituye el soporte de CipSoft.
+### Descargar y abrir
 
-### Descargar y comenzar
+Descarga **[Repair.Assistant.exe](https://github.com/davidag29/repair-tibia/releases/download/v2/Repair.Assistant.exe)** desde la publicación **Version 2**. Es un único ejecutable portable: no se instala y no necesitas Python. El título de la ventana cambia entre **Asistente de reparación** y **Repair assistant** según el idioma elegido.
 
-Descarga el ejecutable desde [la última versión publicada](https://github.com/davidag29/repair-tibia/releases/latest). El archivo de GitHub se llama **`S-Repair.for.Tibia.exe`**. Incluye Python y sus dependencias; no necesitas instalar Python para utilizarlo.
+La [Versión 1 de terminal](https://github.com/davidag29/repair-tibia/releases/tag/v1) permanece en el historial. Las instrucciones siguientes corresponden a la interfaz gráfica de la Versión 2.
 
-**¿Windows bloquea la aplicación?** Consulta la [guía con capturas de Control inteligente de aplicaciones](docs/windows-app-control.md#espanol). Explica cómo revisar la configuración y las consecuencias de cambiarla; no es un requisito desactivar la protección.
+### Comprobar y reparar
 
-1. Abre el ejecutable: las opciones aparecen arriba, con **Reparar** primero y **Language: English / Español** destacado. La descripción del proceso y los avisos aparecen debajo.
-2. Usa **↑ y ↓** para recorrer la lista y **Enter** para seleccionar. **Esc** sale o vuelve. Al seleccionar **Reparar** se confirma el inicio; selecciona **Salir** si no deseas continuar. También funcionan los atajos **S** para reparar, **L** para idioma, **R** para respaldos y **N** para salir. No necesitas escribir números.
-3. En **Language**, elige **Español** o **English** con las flechas y Enter. Vuelve a la descripción completa en ese idioma. Si la ventana es pequeña, usa **PgUp/PgDn** para leer el resto de la descripción sin perder de vista las opciones.
-4. Si no encuentra la instalación habitual, indica la carpeta que contiene `Tibia.exe`. Puedes pegar una ruta con espacios, entre comillas, o la ruta al ejecutable. **Una respuesta vacía cierra el reparador sin cambios.** Si la ruta es incorrecta, puedes reintentarlo.
+1. Abre el programa y elige **Español** o **English** en **Idioma / Language**.
+2. Confirma la ruta de Tibia. Si no se encuentra en `%LOCALAPPDATA%\Tibia`, escribe otra carpeta o usa **Examinar**. También puedes indicar la ruta de `Tibia.exe`.
+3. **Comprobar instalación** consulta los manifiestos oficiales y verifica los archivos locales sin reemplazarlos. Muestra los archivos pendientes y el tamaño estimado de descarga.
+4. **Reparar Tibia** espera a que cierres el juego y su iniciador normalmente. La ventana permanece abierta y continúa automáticamente; no fuerza su cierre.
+5. Después de comprobar la instalación, aparece una confirmación con los archivos pendientes, descarga estimada y ubicación del respaldo. **No** es la opción predeterminada. También se sincronizan los metadatos oficiales.
+6. Al aceptar, descarga y verifica todo, crea el respaldo, reemplaza archivos y verifica el resultado. Si Tibia se vuelve a abrir, espera, vuelve a comprobar y solicita una nueva confirmación para el plan actualizado.
+7. Al finalizar, abre Tibia desde tu acceso directo habitual.
 
-### Reparar Tibia
+Si archivos y metadatos ya están actualizados, no crea cambios ni otro respaldo. El registro indica el resultado y las barras muestran el avance real de la etapa y del archivo o grupo actual.
 
-Lee la explicación y selecciona **Reparar** con las flechas y Enter. Para cancelar, selecciona **Salir** o pulsa **Esc**. Los atajos S/Y también permiten iniciar la reparación.
+**Cancelar operación** detiene esperas, lecturas y descargas en puntos seguros. Durante la instalación, restauración o recuperación se deshabilita para terminar el trabajo antes de cerrar. Si solicitas salir durante esa etapa, la ventana espera. No fuerces el cierre del proceso.
 
-Si Tibia o su iniciador están abiertos, ciérralos normalmente. El reparador mantiene su ventana abierta y reinicia la comprobación cuando se cierran; no fuerza el cierre del juego.
+### Respaldos y restauración
 
-El proceso muestra barras para revisión, descarga, respaldo e instalación, con velocidad y tiempo estimado de descarga:
-
-1. Consulta los manifiestos de `https://static.tibia.com/launcher/` con una URL de consulta única para evitar información almacenada en caché.
-2. Compara los archivos locales y descarga solo los que requieren reemplazo.
-3. Verifica tamaños y SHA-256 de las descargas, y reconoce la envoltura LZMA utilizada por Tibia.
-4. Comprueba que el manifiesto del servidor no haya cambiado durante la descarga.
-5. Respalda los archivos que reemplazará, instala las copias oficiales y verifica el resultado.
-
-Al terminar, cierra el reparador y abre Tibia desde su acceso directo habitual.
-
-### ¿Dónde están los respaldos?
-
-Se guardan **junto a la carpeta de instalación de Tibia**, nunca dentro de la carpeta temporal de descarga. Con la instalación habitual, la ubicación es:
+Los respaldos se guardan **junto a la carpeta de instalación**, con este formato:
 
 ```text
 %LOCALAPPDATA%\Tibia-respaldo-AAAAMMDD-HHMMSS-identificador
 ```
 
-Si Tibia está en `D:\Juegos\Tibia`, los respaldos quedan en `D:\Juegos\Tibia-respaldo-*`. El programa muestra **la ruta exacta** al crearlos y al finalizar, además de un comando de restauración para copiar y pegar en PowerShell.
+Si Tibia está en `D:\Juegos\Tibia`, quedan en `D:\Juegos\Tibia-respaldo-*`. **Abrir carpeta del respaldo** abre la ubicación exacta.
 
-Cada respaldo contiene los archivos que iban a reemplazarse y `restore.json`. **No es una copia completa de toda la instalación.** Se conserva después de restaurar. Los respaldos de la versión 1.0.0 también son compatibles.
+Cada respaldo contiene los archivos que iban a reemplazarse y `restore.json`; no es una copia completa de Tibia. Se conservan los respaldos creados por las versiones anteriores y se admite su restauración.
 
-### Restaurar con R
+1. Selecciona la misma instalación de Tibia que se reparó.
+2. Abre **Respaldos / Restaurar** y elige un respaldo. **Buscar otra carpeta** permite localizarlo manualmente.
+3. Confirma la restauración; **No** es la opción predeterminada.
+4. El programa espera al cierre de Tibia y verifica todos los archivos del respaldo antes de escribir.
 
-1. Abre el programa y, en la pantalla de descripción, pulsa **R — Respaldos / Restaurar**. Puedes cambiar antes el idioma con L.
-2. Verás los últimos 20 respaldos de esa instalación, ordenados del más reciente al más antiguo, con sus rutas completas.
-3. Selecciona el respaldo con las flechas y Enter. Para uno guardado en otra ubicación, selecciona **Indicar otra carpeta de respaldo…** y pega su ruta. Una ruta vacía cancela; Esc vuelve o sale de la lista.
-4. Comprueba las rutas de instalación y respaldo. Selecciona **Sí, restaurar** y Enter para confirmar. **Cancelar** está seleccionado inicialmente; Esc también cancela.
-5. Cierra Tibia si sigue abierto. El programa verifica **todos** los archivos del respaldo antes de la primera escritura; si falta alguno o no coincide su hash, no inicia la restauración.
-6. Restaura los archivos anteriores y elimina los que fueron creados por esa reparación. Verifica los archivos restaurados y conserva el respaldo.
+Restaurar recupera archivos anteriores y elimina los que creó aquella reparación. Puede devolver el cliente a una versión antigua. **El respaldo se conserva** después de restaurar.
 
-Restaurar puede devolver el cliente a una versión anterior. Esto permite recuperar el estado previo a la reparación; no garantiza que esa versión pueda conectarse al servidor actual. Usa únicamente respaldos creados por el reparador y correspondientes a esa instalación.
+### Si algo falla
 
-### Si falla la reparación o restauración
+- Si falla una descarga o su verificación, no comienza a reemplazar archivos de la instalación.
+- Si falla la instalación después de empezar a escribir, intenta recuperar los archivos modificados desde el respaldo.
+- Si la recuperación queda incompleta, la ventana permanece abierta y el registro muestra los archivos pendientes y la ubicación del respaldo. Resuelve el bloqueo o los permisos y vuelve a **Respaldos / Restaurar**.
+- Una restauración incompleta conserva el respaldo para reintentar. No borres esa carpeta.
+- La recuperación automática cubre errores detectados por el programa; no implica que pueda recuperarse automáticamente después de un cierre forzado o un corte eléctrico. En esos casos, conserva el respaldo y usa Restaurar.
 
-- **Fallo de descarga, descompresión o verificación:** no se reemplazan archivos de la instalación.
-- **Fallo antes de completar el respaldo:** no se inicia la instalación.
-- **Fallo durante la instalación:** intenta restaurar, en orden inverso, los archivos modificados. Verifica las copias recuperadas y muestra la ruta del respaldo y las instrucciones para restaurarlo manualmente.
-- **Archivos bloqueados o recuperación incompleta:** indica los archivos pendientes. Cierra Tibia, comprueba los permisos y reintenta desde **Restaurar un respaldo**. No borres el respaldo.
-- **Restauración manual incompleta:** conserva el respaldo e informa de los archivos pendientes para poder reintentar.
+### Archivos oficiales, permisos y compatibilidad
 
-Ctrl+C solicita cancelar. Un corte eléctrico o un cierre forzado pueden impedir la recuperación automática.
+Las descargas proceden de `https://static.tibia.com/launcher/`, con consultas para evitar información antigua en caché. Se comprueban tamaños y SHA-256, incluida la envoltura LZMA de Tibia, y se verifica que los manifiestos del servidor no hayan cambiado antes de instalar.
 
-### Datos que conserva y límites
+Se conservan mapas, atajos, configuraciones, capturas y demás carpetas personales protegidas. No modifica la memoria del juego ni desactiva BattlEye. Es una herramienta independiente, sin aprobación de CipSoft o BattlEye; no garantiza resolver todas las causas del fallo de actualización ni ausencia de incompatibilidades.
 
-El reparador excluye `conf`, `minimap`, `characterdata`, `screenshots`, `log` y `cache`. Conserva las configuraciones, mapas, datos de personajes y capturas almacenados allí. También omite archivos auxiliares oficiales dentro de esas carpetas, como `conf/gpublacklist.json`.
+Se ejecuta con los permisos del usuario. **No solicita administrador automáticamente**; si Windows deniega acceso, muestra el error. **No tiene firma digital Authenticode**. La publicación incluye el SHA-256 del ejecutable para comprobar la descarga.
 
-No solicita tu cuenta o contraseña, no automatiza el juego ni incorpora cambios propios al código de los archivos oficiales. El repositorio y sus descargas no incluyen archivos del juego ni DLL de instalaciones ajenas; se obtienen del servidor oficial durante la reparación.
+**Windows 11 x64 probado localmente.** Windows 10 x64 no se ha validado en otro equipo. No se ofrece compatibilidad con Windows 7/8/8.1, 32 bits ni ARM64. Las pruebas de distribución todavía requieren más equipos; retirar Python del PATH en una prueba no equivale a probar todas las instalaciones de Windows.
 
-**Herramienta independiente, sin afiliación ni aprobación de CipSoft o BattlEye.** Trabaja con Tibia cerrado, no modifica la memoria del juego ni desactiva BattlEye. No se garantiza ausencia de bloqueos, incompatibilidades o falsos positivos. La [FAQ de BattlEye](https://www.battleye.com/support/faq/) contempla verificar o reinstalar archivos para resolver errores de integridad; esto no constituye una aprobación de esta herramienta. Consulta también la [regla 3b de Tibia](https://www.tibia.com/support/?rule=3b&subtopic=tibiarules).
-
-**El ejecutable no tiene firma digital Authenticode.** S. Tensen es el crédito de autor en la interfaz y los metadatos, no un certificado digital. Si un antivirus muestra una detección, verifica el archivo y solicita revisión al fabricante; Microsoft dispone de un [portal para falsos positivos](https://www.microsoft.com/en-us/wdsi/filesubmission). No necesitas desactivar el antivirus para el funcionamiento previsto del programa.
-
-### Compatibilidad y comandos
-
-Windows 11 x64 es el sistema recomendado, con pruebas locales en un equipo. Windows 10 x64 tiene compatibilidad prevista, pendiente de pruebas. Esta compilación no admite Windows 7, 8, 8.1 ni sistemas de 32 bits. Windows ARM, Linux y macOS no están validados ni cubiertos por esta versión. Requiere Tibia instalado y acceso HTTPS al servidor oficial; utiliza Windows PowerShell y CIM para comprobar si el juego sigue abierto.
-
-Ejemplos en PowerShell usando el nombre del archivo descargado:
-
-```powershell
-# Diagnóstico sin cambios
-& '.\S-Repair.for.Tibia.exe' --idioma es --diagnostico
-# Descargar y verificar en una carpeta temporal, sin instalar
-& '.\S-Repair.for.Tibia.exe' --idioma es --verificar-descargas
-# Reparar una instalación en otra ubicación, con confirmación
-& '.\S-Repair.for.Tibia.exe' --idioma es --ruta 'D:\Juegos\Tibia' --reparar
-# Mostrar los respaldos disponibles
-& '.\S-Repair.for.Tibia.exe' --idioma es --restaurar
-# Restaurar un respaldo concreto, con confirmación
-& '.\S-Repair.for.Tibia.exe' --idioma es --ruta 'D:\Juegos\Tibia' --restaurar 'D:\Juegos\Tibia-respaldo-AAAAMMDD-HHMMSS-identificador'
-# Ver todos los comandos
-& '.\S-Repair.for.Tibia.exe' --idioma es --ayuda
-```
-
-### Código fuente, compilación y pruebas
-
-La ejecución desde código fuente requiere Windows y Python 3.11 o posterior, sin bibliotecas de terceros. Para abrir los menús:
-
-```powershell
-python .\src\srepair.py --menu
-```
-
-Para compilar en Windows x64, ejecuta ` .\build.ps1` desde la raíz del repositorio. Crea `.venv`, instala `requirements-build.txt` y genera un único archivo `dist\S-Repair for Tibia.exe` sin UPX. No firma digitalmente el resultado. La versión publicada se compila con Python **3.14.3 x64** y PyInstaller **6.22.3**; no se garantiza una compilación idéntica byte por byte. Python 3.14 admite [Windows 10 o posterior](https://docs.python.org/3.14/using/windows.html#supported-windows-versions).
-
-Ejecuta `python .\tests\test_repair.py` para comprobar idiomas, menús, confirmaciones, rutas, espera del cierre, progreso, hashes, descompresión, selección y validación de respaldos, restauración y recuperación ante fallos simulados. Las pruebas usan carpetas temporales, sin descargas reales ni cambios en tu instalación de Tibia.
+Si Windows bloquea el archivo, consulta la [guía de Control de aplicaciones de Windows](docs/windows-app-control.md#espanol). Desactivar las protecciones no es un requisito del funcionamiento previsto. Para una detección incorrecta, se puede solicitar revisión al fabricante del antivirus.
 
 <a id="english"></a>
 ## English
 
-An independent assistant for Tibia installations that do not update correctly. It may help with **“Your client version is too old. Restart Tibia to update your client”** when update information is served from a stale cache or local files are damaged or outdated. It does not fix every possible update issue or replace CipSoft support.
+### Download and open
 
-### Download and start
+Download **[Repair.Assistant.exe](https://github.com/davidag29/repair-tibia/releases/download/v2/Repair.Assistant.exe)** from **Version 2**. It is one portable executable: no installer and no Python installation required. The window title switches between **Asistente de reparación** and **Repair assistant** with the selected language.
 
-Download **`S-Repair.for.Tibia.exe`** from [the latest release](https://github.com/davidag29/repair-tibia/releases/latest). Python and its dependencies are included; you do not need to install Python to use it.
+The [Version 1 terminal edition](https://github.com/davidag29/repair-tibia/releases/tag/v1) remains available in the release history. These instructions describe Version 2's graphical interface.
 
-**Is Windows blocking the app?** Read the [illustrated Smart App Control guide](docs/windows-app-control.md#english). It explains how to review the setting and the implications of changing it; disabling protection is not a requirement.
+### Check and repair
 
-1. Open the executable: options appear at the top with **Repair** first and **Language: English / Español** highlighted. The process description and notices appear below, initially in Spanish.
-2. Use **↑ and ↓** to move through the list and **Enter** to select. **Esc** exits or goes back. Selecting **Repair** confirms the start; select **Exit** if you do not want to continue. Shortcuts **Y** for repair, **L** for language, **R** for backups and **N** for exit also work. No numbers are required.
-3. Select **Language**, then **English** using the arrows and Enter. The full description is displayed in that language. On smaller windows, use **PgUp/PgDn** to read the description while the options remain visible.
-4. If the default installation cannot be found, enter the folder containing `Tibia.exe`. Quoted paths, spaces and a path to the executable itself are accepted. **An empty response closes the tool without changes.** Invalid paths can be retried.
+1. Select **Español** or **English** under **Idioma / Language**.
+2. Check the Tibia path. If it is not found at `%LOCALAPPDATA%\Tibia`, enter another folder or use **Browse**. A path to `Tibia.exe` is also accepted.
+3. **Check installation** requests official manifests and verifies local files without replacing them. It reports pending files and estimated download size.
+4. **Repair Tibia** waits for you to close the game and launcher normally. The window stays open and continues automatically; processes are not forcibly closed.
+5. After checking, a confirmation shows pending files, estimated download and backup location. **No** is the default. Official metadata is synchronized too.
+6. On confirmation, all downloads are verified, files are backed up, then replaced and verified. If Tibia reopens, the tool waits, rescans and asks for confirmation again for the refreshed plan.
+7. When finished, start Tibia from your usual shortcut.
 
-### Repair Tibia
+If files and metadata are already current, no changes or additional backups are created. The log reports results; progress bars show actual stage and current file/group progress.
 
-Read the explanation, then select **Repair** using the arrows and Enter. To cancel, select **Exit** or press **Esc**. The Y/S shortcuts can also start repair.
+**Cancel operation** stops waits, reads and downloads at safe points. Cancellation is disabled during installation, restoration and recovery so the operation can finish before closing. A close request waits for completion. Do not forcibly terminate the process.
 
-If Tibia or its launcher is running, close it normally. The tool keeps its window open and restarts checks automatically once they close. It does not forcibly close the game.
+### Backups and restoration
 
-Progress bars cover checks, downloads, backup and installation, with download speed and estimated remaining time:
-
-1. Fetch official manifests from `https://static.tibia.com/launcher/` using a unique query URL to bypass stale cache.
-2. Compare local files and download only those requiring replacement.
-3. Verify download sizes and SHA-256 hashes, including Tibia's LZMA wrapper format.
-4. Check that the server manifest has not changed during the download.
-5. Back up files before replacement, install official copies and verify the result.
-
-When complete, close the tool and launch Tibia from its usual shortcut.
-
-### Where are backups stored?
-
-Backups are stored **beside the Tibia installation folder**, not in the temporary download folder. For the default installation:
+Backups are stored **beside the Tibia installation folder**:
 
 ```text
 %LOCALAPPDATA%\Tibia-respaldo-YYYYMMDD-HHMMSS-identifier
 ```
 
-For `D:\Games\Tibia`, backups are created under `D:\Games\Tibia-respaldo-*`. The program displays **the exact path** when a backup is created and after completion, along with a PowerShell restore command you can copy and paste.
+For `D:\Games\Tibia`, backups are placed in `D:\Games\Tibia-respaldo-*`. **Open backup folder** opens the exact location.
 
-Each backup contains files that were about to be replaced and `restore.json`. **It is not a full copy of the installation.** The backup remains after restoration. Backups from version 1.0.0 are supported.
+Each backup contains files that were about to be replaced and `restore.json`; it is not a complete installation backup. Backups from earlier releases remain compatible.
 
-### Restore with R
+1. Select the same Tibia installation that was repaired.
+2. Open **Backups / Restore** and select a backup, or **Browse another folder**.
+3. Confirm restoration; **No** is the default.
+4. The tool waits for Tibia to close and verifies every backup file before writing.
 
-1. Open the tool, optionally change the language using L, then press **R — Backups / Restore** on the description screen.
-2. The latest 20 backups for that installation are listed, newest first, with their full paths.
-3. Select a backup with the arrows and Enter. For a backup stored elsewhere, choose **Enter another backup folder…** and paste its path. An empty path cancels; Esc goes back or exits the list.
-4. Check the installation and backup paths. Select **Yes, restore** and Enter to confirm. **Cancel** is initially selected; Esc also cancels.
-5. Close Tibia if it is running. The tool verifies **all** backup files before the first write. If any file is missing or its hash does not match, restoration does not start.
-6. Previous files are restored, and files created by that repair are removed. Restored files are verified and the backup is kept.
+Restoration recovers previous files and removes files created by that repair. It can revert the client to an older version. **Backups are retained** after restoration.
 
-Restoration may revert the client to an older version. It recovers the state before that repair; it does not guarantee that the old version can connect to the current server. Use only backups created by this tool for that installation.
+### If something fails
 
-### If repair or restoration fails
+- Download or verification failures stop before installation files are replaced.
+- An installation failure triggers an attempt to recover modified files from the backup.
+- Incomplete recovery keeps the window open and lists pending files and the backup location. Resolve locks or permissions, then retry **Backups / Restore**.
+- Incomplete restoration retains the backup for retries. Do not delete it.
+- Automatic recovery covers errors detected by the running application. It does not promise automatic recovery after forced termination or power loss; retain the backup and use Restore in those cases.
 
-- **Download, decompression or verification failure:** installation files are not replaced.
-- **Failure before backup completion:** installation does not begin.
-- **Installation failure:** the tool attempts to restore modified files in reverse order, verifies recovered copies, and displays the backup path and manual restore instructions.
-- **Locked files or incomplete automatic recovery:** remaining files are listed. Close Tibia, check permissions and retry using **Restore a backup**. Keep the backup folder.
-- **Incomplete manual restoration:** the backup is kept, and remaining files are reported so you can retry.
+### Official files, permissions and compatibility
 
-Ctrl+C requests cancellation. Power loss or forced termination can prevent automatic recovery.
+Files come from `https://static.tibia.com/launcher/`, using queries to avoid stale cached information. Downloads are checked against size and SHA-256, including Tibia's LZMA wrapper. Server manifests are rechecked before installation.
 
-### Preserved data and limitations
+Maps, hotkeys, settings, screenshots and protected personal folders are preserved. The tool does not modify game memory or disable BattlEye. It is independent and not approved by CipSoft or BattlEye; it cannot guarantee a fix for every update failure or freedom from incompatibilities.
 
-The repair excludes `conf`, `minimap`, `characterdata`, `screenshots`, `log` and `cache`, preserving settings, maps, character data and screenshots stored there. Official helper files within those folders, such as `conf/gpublacklist.json`, are also skipped.
+The app uses the current user's permissions. **It does not request administrator access automatically**; denied access is reported. **It is not Authenticode-signed**. The release includes the executable's SHA-256 for download verification.
 
-The tool does not request your account or password, automate gameplay or add custom code to official game files. This repository and its downloads do not include game files or DLLs from other installations; files are fetched from the official server during repair.
+**Windows 11 x64 tested locally.** Windows 10 x64 has not been validated on another computer. Windows 7/8/8.1, 32-bit and ARM64 are not supported targets. Broader distribution testing is still needed; removing Python from PATH is not equivalent to testing every Windows installation.
 
-**Independent tool, not affiliated with or approved by CipSoft or BattlEye.** It works with Tibia closed, does not modify game memory and does not disable BattlEye. Freedom from blocks, compatibility issues or false positives is not guaranteed. The [BattlEye FAQ](https://www.battleye.com/support/faq/) discusses verifying or reinstalling game files to fix integrity issues; this is not approval of this tool. See also [Tibia rule 3b](https://www.tibia.com/support/?rule=3b&subtopic=tibiarules).
+If Windows blocks it, see the [Windows App Control guide](docs/windows-app-control.md#english). Disabling protections is not required for intended operation. Incorrect antivirus detections can be submitted to the vendor for review.
 
-**The executable is not Authenticode-signed.** S. Tensen is the author credit in the interface and file metadata, not a digital certificate. If antivirus software reports a detection, verify the file and request a vendor review. Microsoft provides a [false-positive submission portal](https://www.microsoft.com/en-us/wdsi/filesubmission). Disabling antivirus is not required for the tool's intended operation.
+## Código fuente y compilación / Source and build
 
-### Compatibility and commands
-
-Windows 11 x64 is recommended and has been tested locally on one machine. Windows 10 x64 is expected to work but has not been tested. This build does not support Windows 7, 8, 8.1 or 32-bit systems. Windows ARM, Linux and macOS are not validated or covered by this release. A Tibia installation and HTTPS access to the official server are required. Windows PowerShell and CIM are used to check whether the game is running.
-
-PowerShell examples using the downloaded filename:
+Python 3.14 x64 was used for the Windows build. Tkinter/Tcl/Tk must be available in the development installation. End users only need the release EXE.
 
 ```powershell
-# Diagnose without changes
-& '.\S-Repair.for.Tibia.exe' --language en --diagnose
-# Download and verify in a temporary folder without installing
-& '.\S-Repair.for.Tibia.exe' --language en --verify-downloads
-# Repair another installation, with confirmation
-& '.\S-Repair.for.Tibia.exe' --language en --root 'D:\Games\Tibia' --repair
-# List available backups
-& '.\S-Repair.for.Tibia.exe' --language en --restore
-# Restore a specific backup, with confirmation
-& '.\S-Repair.for.Tibia.exe' --language en --root 'D:\Games\Tibia' --restore 'D:\Games\Tibia-respaldo-YYYYMMDD-HHMMSS-identifier'
-# List all commands
-& '.\S-Repair.for.Tibia.exe' --language en --help
+# Interfaz gráfica / Graphical application
+python src/srepair_gui.py
+
+# EXE portable sin consola / Portable windowed EXE
+.\build.ps1
 ```
 
-### Source code, build and tests
+Output: `dist/Repair Assistant.exe`. The build uses pinned PyInstaller, `--onefile --windowed --noupx`, includes the icon and Tcl/Tk, and does not apply a digital signature. `build-preview.ps1` is a compatibility alias for the same graphical build.
 
-Running from source requires Windows and Python 3.11 or newer, with no third-party runtime libraries. To open the menus:
+The legacy terminal interface remains available **from source**, with its original command-line options:
 
 ```powershell
-python .\src\srepair.py --menu
+python src/srepair.py --help
+python src/srepair.py --language es --diagnose
+python src/srepair.py --language en --menu
 ```
 
-To build on Windows x64, run `.\build.ps1` from the repository root. It creates `.venv`, installs `requirements-build.txt`, and produces a single `dist\S-Repair for Tibia.exe` without UPX. It does not digitally sign the result. The release uses Python **3.14.3 x64** and PyInstaller **6.22.3**; bit-for-bit reproducibility is not guaranteed. Python 3.14 supports [Windows 10 and newer](https://docs.python.org/3.14/using/windows.html#supported-windows-versions).
+These options belong to the source terminal entry point; they are not command-line options of the graphical release EXE.
 
-Run `python .\tests\test_repair.py` to check languages, menus, confirmation, paths, waiting for game closure, progress, hashes, decompression, backup selection and validation, restoration, and recovery from simulated failures. Tests use temporary folders, without real downloads or changes to your Tibia installation.
+## Pruebas / Tests
+
+```powershell
+python tests/test_repair.py
+python -m unittest discover -s tests -p test_diagnostic.py
+python -m unittest discover -s tests -p test_gui.py
+python -m unittest discover -s tests -p test_gui_workflows.py
+```
+
+GUI tests require a Windows desktop session. They exercise actual repair and restoration with temporary installations and a simulated official server, including corrupt downloads, rejected confirmation, cancellation, changed manifests, stale metadata, write failures, incomplete recovery, reopening the game and backup validation. Existing terminal recovery tests are retained. Tk scaling checks cover layouts at relative 100%, 125% and 150%; they do not replace testing on other physical devices.
 
 ## Estructura / Structure
 
-```text
-src/srepair.py                 Reparador y terminal / Repair logic and terminal UI
-tests/test_repair.py           Pruebas / Tests
-packaging/windows-version.txt  Metadatos de Windows / Windows metadata
-requirements-build.txt         Dependencias de compilación / Build dependencies
-build.ps1                      Compilar el ejecutable / Build the executable
-```
+- `src/srepair_gui.py`: Tkinter/ttk interface, worker thread and event queue.
+- `src/srepair.py`: shared repair engine and legacy terminal interface.
+- `packaging/`: Windows version metadata and embedded application icon.
+- `tests/`: diagnostic, interface, repair and recovery tests.
+- `docs/`: Windows App Control guide, screenshots and [icon origin / generation prompt](docs/icon-source.md).
 
-## Autor y derechos / Author and rights
+La textura de piedra se genera en el código. El icono deriva del recurso local del cliente de Tibia con un símbolo de reparación añadido; los elementos originales de Tibia pertenecen a sus respectivos titulares.
 
-**S. Tensen**. Copyright (c) 2026 S. Tensen.
-
-Licencia del proyecto pendiente de definir. Tibia y BattlEye pertenecen a sus respectivos titulares.
-
-Project license has not been selected. Tibia and BattlEye belong to their respective owners.
+The stone texture is generated in code. The icon derives from the local Tibia client's resource with an added repair symbol; original Tibia elements belong to their respective owners.
